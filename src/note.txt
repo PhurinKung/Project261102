@@ -1,0 +1,10 @@
+note :
+
+- to Pmai : dont forget to write vector<string> categories
+            *might need to stores in file
+
+- to everyone: 
+    I wrote some todo / what I need a desicion please help me duay krub TT
+    ถ้ามีอะไรหายไปบอกด้วยครับบ
+
+love jubjub from lalitnapas 
