@@ -14,9 +14,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="imgui.h">
-      <Filter>imgui\Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="imgui_impl_win32.h">
       <Filter>imgui\Header Files</Filter>
     </ClInclude>
@@ -43,6 +40,9 @@
     </ClInclude>
     <ClInclude Include="src\functions.h">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imgui.h">
+      <Filter>imgui\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
