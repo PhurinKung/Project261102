@@ -1,19 +1,23 @@
 #include "calendarGUI.h"
 #include "imgui.h"
-#include <chrono>
+#include <ctime>
 #include <string>
 
 namespace cgui
 {
+	int FirstDayOfMonth(int, int);
+	int HowManyDaysInThisMonth(int, int);
+	void DrawCalendar();
+	
+
 	void ThewholecalendarGUI() 
 	{
 		DrawCalendar();
 	}
 
-
 	void DrawCalendar()
 	{
-		::ImGui::Begin("Calendar", NULL, ImGuiWindowFlags_NoResize);
+		::ImGui::Begin("Calendar", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
 		
 		::ImGui::BeginTable("CalendarTable", 7);
 		int ThisYear = 2026; //recive from input kub
@@ -34,8 +38,8 @@ namespace cgui
 		}
 
 		//days of month
-		unsigned int DayOne = FirstDayOfMonth(ThisYear, ThisMonth); //position of first day of the month
-		unsigned int AllDay = HowManyDaysInThisMonth(ThisYear, ThisMonth);
+		int DayOne = FirstDayOfMonth(ThisYear, ThisMonth); //position of the first day of the month
+		int AllDay = HowManyDaysInThisMonth(ThisYear, ThisMonth);
 
 		int nday = 1;
 		for (int i = 0; i < 6; i++) {
@@ -61,20 +65,26 @@ namespace cgui
 		::ImGui::End();
 	}
 
-	unsigned int FirstDayOfMonth(int y, unsigned int m)
+	int FirstDayOfMonth(int y, int m)
 	{
-		using namespace ::std::chrono;
-		year_month_day ymd{year{y}/month{m}/day{1u} };
-		weekday wd{ sys_days{ymd} };
+		using namespace std;
+		tm timestamp = {};
+		timestamp.tm_year = y - 1900;
+		timestamp.tm_mon = m - 1;
+		timestamp.tm_mday = 1;
 
-		return wd.c_encoding();
+		mktime(&timestamp);
+		return  timestamp.tm_wday;
 	}
 
-	unsigned int HowManyDaysInThisMonth(int y, unsigned int m)
+	int HowManyDaysInThisMonth(int y, int m)
 	{
-		using namespace ::std::chrono;
-		year_month_day ymdl{ year{y} / month{m} / last };
-
-		return (unsigned int)ymdl.day();
+		tm timestamp = {};
+		timestamp.tm_year = y - 1900;
+		timestamp.tm_mon = m;
+		//วันที่ 0 ของเดือนถัดไป = วันสุดท้ายของเดือนนี้
+		timestamp.tm_mday = 0;
+		mktime(&timestamp);
+		return timestamp.tm_mday;
 	}
 }
