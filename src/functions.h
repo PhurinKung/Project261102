@@ -39,6 +39,7 @@ public:
     string getCategory(){ return category; }
     string getDetails(){ return details; }
     string getPlaces(){ return places; }
+    unsigned long long getID(){ return id; }
 
     // compare func for sort
     // sort by start date, end date, id
@@ -52,11 +53,16 @@ public:
 class CalendarManager {
 private:
     vector<Event> allEvents; // contains all events
-    string filename = "calendar_data.txt"; // save all events in this file na / can change name na krub
     
+    //todo : what we want to do with category na? write functions noi krub
+    //where we save all category d krub, maybe other file mai or in data file pai loi
+    vector<string> categories; // contains all categories ?????
+
+
+    string datafilename = "calendar_data.txt"; // save all events in this file na / can change name na krub
+
     void sortEvents(); //function to sort all events (by date)
     unsigned long long nextID = 1; // ID for each events, update every time we add new one 
-
 public:
     CalendarManager(); // auto load
     ~CalendarManager(); // auto save
