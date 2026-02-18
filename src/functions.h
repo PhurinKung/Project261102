@@ -16,15 +16,6 @@ private:
     unsigned long long id;
     
     // note: can add more if want to
-
-    // compare func for sort
-    // sort by start date, end date, id
-     bool operator<(const Event &a) const {
-         if(E_start != a.E_start) return E_start < a.E_start;
-         if(E_end != a.E_end) return E_end < a.E_end;
-         return id < a.id;
-     }
-
 public:
     Event(string t = "", time_t s = 0, time_t e = 0, string c = "Default", 
             string d = "", string p = "", unsigned long long i = 0){
@@ -37,6 +28,10 @@ public:
         id = i;
     }
 
+    void setID(unsigned long long n) {
+        id = n;
+    }
+
     //return private variables
     string getTitle(){ return title; }
     time_t getStartTime(){ return E_start; }
@@ -44,6 +39,14 @@ public:
     string getCategory(){ return category; }
     string getDetails(){ return details; }
     string getPlaces(){ return places; }
+
+    // compare func for sort
+    // sort by start date, end date, id
+    bool operator<(const Event& a) const {
+        if (E_start != a.E_start) return E_start < a.E_start;
+        if (E_end != a.E_end) return E_end < a.E_end;
+        return id < a.id;
+    }
 };
 
 class CalendarManager {
@@ -52,7 +55,7 @@ private:
     string filename = "calendar_data.txt"; // save all events in this file na / can change name na krub
     
     void sortEvents(); //function to sort all events (by date)
-    unsigned long long ID = 1; // ID for each events, update every time we add new one 
+    unsigned long long nextID = 1; // ID for each events, update every time we add new one 
 
 public:
     CalendarManager(); // auto load
@@ -81,6 +84,7 @@ CalendarManager::~CalendarManager() {saveToFile();}
 
 void CalendarManager::loadFromFile() {
     // todo : recieve all data from filename to vector<Event>
+    // dont forget to run id -> set nextID to maxid + 1
     
     // ? : if we already have data should we delete first ?
 }
@@ -93,11 +97,17 @@ void CalendarManager::sortEvents() {
     sort(allEvents.begin(), allEvents.end());
 }
 
+
 bool CalendarManager::addEvent(Event newEvent){
     //todo : add newEvent to allEvents
-    //todo : check if the date is correct 
+    //todo : check if the date is correct
     
-    //add event then sort
+    newEvent.setID(nextID++); //run id
+    allEvents.push_back(newEvent);
+    this->sortEvents();//added event then sort
+    return true;
+
+    
     //return true if sucsess
 }
 bool CalendarManager::deleteEvent(int eventId){
