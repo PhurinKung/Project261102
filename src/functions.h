@@ -105,9 +105,9 @@ void CalendarManager::sortEvents() {
 
 
 bool CalendarManager::addEvent(Event newEvent){
-    //todo : add newEvent to allEvents
-    //todo : check if the date is correct
-    
+    if (newEvent.getStartTime() >= newEvent.getEndTime()) {
+        return false; //ตรวจสอบเวลา
+    }
     newEvent.setID(nextID++); //run id
     allEvents.push_back(newEvent);
     this->sortEvents();//added event then sort
@@ -116,11 +116,19 @@ bool CalendarManager::addEvent(Event newEvent){
     
     //return true if sucsess
 }
-bool CalendarManager::deleteEvent(int eventId){
-    //todo : delete event by look for this eventID
-    
-    //return true if sucsess
+bool CalendarManager::deleteEvent(unsigned long long eventId){
+    auto it = find_if(allEvents.begin(), allEvents.end(),
+        [eventId](const Event& e) {
+            return e.getID() == eventId;
+        });
+
+    if (it != allEvents.end()) {
+        allEvents.erase(it); //ลบ event
+        return true;
+    }
+    return false;
 }
+
 bool CalendarManager::editEvent(int eventId, Event updatedEvent) {
     //todo : look for this eventId and update
     //if the date is change then sort (or just sort every time)
