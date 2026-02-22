@@ -129,10 +129,26 @@ bool CalendarManager::deleteEvent(unsigned long long eventId){
     return false;
 }
 
-bool CalendarManager::editEvent(int eventId, Event updatedEvent) {
+bool CalendarManager::editEvent(unsigned long long eventId, Event updatedEvent) {
     //todo : look for this eventId and update
     //if the date is change then sort (or just sort every time)
     //return true if sucsess
+    
+    for(auto &e: allEvents){
+  if(e.getID()==eventId){
+    
+    if(updatedEvent.getStartTime()>=updatedEvent.getEndTime())
+   return false;
+
+   updatedEvent.setID(eventId);
+   e = updatedEvent;
+
+   sortEvents();
+   return true;
+     }
+    }
+return false;
+
 }
 
 const vector<Event>& CalendarManager::getAllEvents() const {
