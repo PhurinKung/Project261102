@@ -9,12 +9,78 @@ namespace cgui
 	int FirstDayOfMonth(int, int);
 	int HowManyDaysInThisMonth(int, int);
 	void DrawCalendar();
+	void DrawCalendarV2();
+	void thisistest();
+	void DrawCustomWindow();
+	void UpcomingEvent();
 	
 
 	void ThewholecalendarGUI() 
 	{
 		ImGui::DockSpaceOverViewport();
-		DrawCalendar();
+		DrawCalendarV2();
+		thisistest();
+		DrawCustomWindow();
+		UpcomingEvent();
+	}
+	// Pass your loaded font into the function
+	void DrawCustomWindow() {
+
+		// --- WINDOW CUSTOMIZATION ---
+		// 1. Change the background color of the window (R, G, B, Alpha)
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.12f, 0.11f, 0.16f, 1.00f));
+		// 2. Make the window corners rounded
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
+
+		// Create the window
+		ImGui::Begin("Custom Window Name");
+
+		// --- FONT CUSTOMIZATION ---
+
+		ImGui::Text("Here is my custom text!");
+		ImGui::Dummy(ImVec2(0.0f, 10.0f)); // Adds vertical spacing
+
+		// --- BUTTON CUSTOMIZATION ---
+		// 4. Set the three states of button colors
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.35f, 0.31f, 0.47f, 1.0f));        // Normal
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.45f, 0.41f, 0.57f, 1.0f)); // Hovering
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.25f, 0.21f, 0.37f, 1.0f));  // Clicked
+
+		// 5. Round the button corners
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 5.0f);
+
+		// Create the button (Width, Height)
+		if (ImGui::Button("Click Me", ImVec2(120, 40))) {
+			// Code to run when clicked goes here
+		}
+
+		// --- CLEANUP (CRITICAL) ---
+		// 6. You must Pop exactly the number of times you Pushed inside this section!
+		ImGui::PopStyleVar(1);   // Removes Button Rounding
+		ImGui::PopStyleColor(3); // Removes the 3 Button Colors
+
+		ImGui::End(); // Ends the Window
+
+		// Clean up the Window customizations pushed before ImGui::Begin
+		ImGui::PopStyleVar(1);   // Removes Window Rounding
+		ImGui::PopStyleColor(1); // Removes Window Background Color
+	}
+
+
+	void thisistest() {
+		::ImGui::Begin("test", NULL);
+		::ImGui::Text("u i a");
+
+		static char event_name[100] = "hehe";
+		ImGui::InputText("Event Name", event_name, sizeof(event_name));
+		// วางคำสั่งนี้ลอยๆ ได้เลย ข้อความจะถูกเซฟลง event_name ตลอดเวลาที่พิมพ์
+
+		if (ImGui::Button("Save Event")) {
+			// This is where you trigger your logic!
+
+			// Clear the text box after saving (optional)
+		}
+		::ImGui::End();
 	}
 
 	void DrawCalendar()
@@ -40,8 +106,8 @@ namespace cgui
 			}
 
 			//days of month
-			int DayOne = FirstDayOfMonth(ThisYear, ThisMonth); //position of the first day of the month
-			int AllDay = HowManyDaysInThisMonth(ThisYear, ThisMonth);
+			static int DayOne = FirstDayOfMonth(ThisYear, ThisMonth); //position of the first day of the month
+			static int AllDay = HowManyDaysInThisMonth(ThisYear, ThisMonth);
 
 			int nday = 1;
 			for (int i = 0; i < 6; i++) {
@@ -61,10 +127,142 @@ namespace cgui
 					}
 				}
 			}
-
-
 			::ImGui::EndTable();
+		}
+		::ImGui::End();
+	}
 
+	void DrawCalendarV2() 
+	{
+		::ImGui::Begin("Calendar", NULL, ImGuiWindowFlags_NoCollapse);
+		static int ThisYear = 2026; //recive from input kub
+		static int ThisMonth = 1; //also this na
+
+		const char* month_names[] = { "January", "February", "March", "April", "May", "June",
+										 "July", "August", "September", "October", "November", "December" };
+
+		std::string header_text = std::string(month_names[ThisMonth - 1]) + " " + std::to_string(ThisYear);
+		// ปรับขนาดและสีข้อความให้คล้ายในรูป
+		//::ImGui::SetWindowFontScale(1.5f); // ขยายขนาดตัวอักษร (ถ้ามี Custom Font ใช้ PushFont จะสวยกว่า)
+		::ImGui::TextColored(ImVec4(0.7f, 0.6f, 0.9f, 1.0f), "%s", header_text.c_str());
+		//::ImGui::SetWindowFontScale(1.0f); // คืนค่าขนาดตัวอักษรกลับเป็นปกติ
+
+
+		// --- เริ่มส่วนที่แก้ไขให้ชิดขอบขวา ---
+		float box_w = ::ImGui::GetWindowWidth() * 0.05f; // ขนาดความกว้างของปุ่ม
+		if (box_w < 15.0f) box_w = 15.0f;
+		float spacing = ::ImGui::GetStyle().ItemSpacing.x; // ระยะห่างระหว่างปุ่ม
+		float total_w = (box_w * 2.0f) + spacing; // ความกว้างรวมของปุ่มทั้งสอง
+
+		// คำนวณหาตำแหน่งแกน X ที่จะทำให้ปุ่มชิดขวาพอดี (ความกว้างหน้าต่าง - ความกว้างปุ่ม - Padding)
+		float right_align_x = ::ImGui::GetWindowWidth() - total_w - ::ImGui::GetStyle().WindowPadding.x - 15.0f;
+
+		// ใช้ SameLine แล้วใส่ค่า offset เข้าไป เพื่อดันปุ่มไปขวาสุด
+		::ImGui::SameLine(right_align_x);
+
+		// ดันการตั้งค่าสีใหม่เข้าไป: ทำให้กล่องโปร่งใส และตัวหนังสือสีขาว
+		::ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // พื้นหลังปกติโปร่งใส (No box)
+		::ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 1.0f, 1.0f, 0.1f)); // ตอนเมาส์ชี้ (ไฮไลท์จางๆ ถ้าไม่ชอบให้เปลี่ยนตัวท้ายเป็น 0.0f)
+		::ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1.0f, 1.0f, 1.0f, 0.2f)); // ตอนกดคลิก
+		::ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f)); // ตัวอักษรสีขาว
+		//ย้อนกลับ <
+		if (::ImGui::Button("<", ImVec2(box_w, 0))) {
+			ThisMonth--;
+			if (ThisMonth < 1) {
+				ThisMonth = 12;
+				ThisYear--;
+			}
+		}
+
+		//ถัดไป >
+		::ImGui::SameLine();
+		if (::ImGui::Button(">", ImVec2(box_w, 0))) {
+			ThisMonth++;
+			if (ThisMonth > 12) {
+				ThisMonth = 1;
+				ThisYear++;
+			}
+		}
+		::ImGui::PopStyleColor(4);
+		
+		::ImGui::Dummy(ImVec2(0.0f, 10.0f)); // เพิ่มช่องว่าง
+		if (::ImGui::BeginTable("CalendarTable", 7)) {
+
+			//header of calendar
+			const char* days[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+			//::ImGui::TableHeadersRow();
+			::ImGui::TableNextRow();
+			for (int i = 0; i < 7; i++) {
+				::ImGui::TableSetColumnIndex(i);
+
+				ImVec2 text_size = ::ImGui::CalcTextSize(days[i]);
+				float available_width = ::ImGui::GetContentRegionAvail().x;
+				float offset = (available_width - text_size.x) * 0.5f;
+				::ImGui::SetCursorPosX(::ImGui::GetCursorPosX() + offset);
+				::ImGui::Text("%s", days[i]);
+			}
+
+			//days of month
+			int DayOne = FirstDayOfMonth(ThisYear, ThisMonth); //position of the first day of the month
+			int AllDay = HowManyDaysInThisMonth(ThisYear, ThisMonth);
+
+			static int selected_day = -1;
+			int nday = 1;
+			for (int i = 0; i < 6; i++) {
+				::ImGui::TableNextRow();
+				for (int j = 0; j < 7; j++) {
+					::ImGui::TableSetColumnIndex(j);
+					if (i == 0 && j < DayOne) ::ImGui::Text(""); //ช่องเปล่าก่อนวันแรก
+					else if (nday > AllDay) ::ImGui::Text(""); //ช่องเปล่าหลังวันท้ายของเดือน
+					else {
+						std::string day_str = std::to_string(nday);
+
+						::ImGui::PushID(nday);
+						float cell_w = ::ImGui::GetContentRegionAvail().x;
+						float cell_h = 60.0f;
+						ImVec2 cursor_pos = ::ImGui::GetCursorScreenPos(); // top right coordinate of the box
+						
+						//selectable boxes
+						bool is_selected = (selected_day == nday);
+						if (::ImGui::Selectable("##day", is_selected, 0, ImVec2(cell_w, cell_h))) {
+							selected_day = nday;
+						}
+
+						//fill numbers
+						ImDrawList* draw_list = ::ImGui::GetWindowDrawList();
+						ImVec2 text_size = ::ImGui::CalcTextSize(day_str.c_str());
+						float offset_x = (cell_w - text_size.x) * 0.5f;
+						float offset_y = (cell_h - text_size.y) * 0.5f;
+						ImVec2 text_pos = ImVec2(cursor_pos.x + offset_x, cursor_pos.y + offset_y);
+
+						draw_list->AddText(text_pos, ::ImGui::GetColorU32(ImGuiCol_Text), day_str.c_str());
+						
+						// 5. วาดจุด Event (ตัวอย่าง: ให้มีจุดแดงในวันที่ 5, 10, 15...)
+						/*
+						bool has_event = (nday % 5 == 0); // ตรงนี้คุณเปลี่ยนไปเช็คจากข้อมูล Calendar ของคุณได้
+						if (has_event) {
+							ImVec2 dot_pos = ImVec2(cursor_pos.x + (cell_w * 0.5f), cursor_pos.y + cell_h - 8.0f);
+							draw_list->AddCircleFilled(dot_pos, 3.0f, IM_COL32(255, 100, 100, 255));
+						}
+						*/
+						
+
+						::ImGui::PopID(); // คืนค่า ID
+						nday++;
+					}
+				}
+			}
+			::ImGui::EndTable();
+		}
+		::ImGui::End();
+	}
+
+	void UpcomingEvent()
+	{
+		::ImGui::Begin("Upcoming Event", NULL, ImGuiWindowFlags_NoCollapse);
+		int n_events = 5;
+		for (int i = 0; i < n_events; i++) {
+			::ImGui::BulletText("  waha ur date");
 		}
 		::ImGui::End();
 	}

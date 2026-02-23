@@ -11091,7 +11091,6 @@ struct ExampleAssetsBrowser
             // - Enable box-select (in 2D mode, so that changing box-select rectangle X1/X2 boundaries will affect clipped items)
             if (AllowBoxSelect)
                 ms_flags |= ImGuiMultiSelectFlags_BoxSelect2d;
-
             // - This feature allows dragging an unselected item without selecting it (rarely used)
             if (AllowDragUnselected)
                 ms_flags |= ImGuiMultiSelectFlags_SelectOnClickRelease;
