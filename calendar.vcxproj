@@ -139,6 +139,7 @@
     <ClInclude Include="imgui_impl_win32.h" />
     <ClInclude Include="imgui_internal.h" />
     <ClInclude Include="imstb_truetype.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="src\calendarGUI.h" />
     <ClInclude Include="src\functions.h" />
   </ItemGroup>

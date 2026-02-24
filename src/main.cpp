@@ -60,6 +60,7 @@ int main(int, char**)
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
 
+    //add thai font here. NotoSansThai
     ImFont* thaiFont = io.Fonts->AddFontFromFileTTF(
         "fonts/NotoSansThai-Regular.ttf",      // location
         18.0f,                          // font's size
