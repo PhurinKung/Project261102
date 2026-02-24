@@ -1,77 +1,214 @@
 #pragma once
+
 #include <iostream>
 #include <string>
 #include <vector>
 
 
+#include<iostream>
+#include<tuple>
+#include<string>
+#include<vector>
+#include<ctime>
+#include<algorithm>
+
 using namespace std;
+
+enum class typeEvent {
+    Work,
+    Personal,
+    Business,
+    Others
+};
 
 class Event{
 private:
     string title;
-
-    // ? : how to store an event time ?? using tuple or else (does it have anything easier mai krub)
-    tuple<int,int,int,int> E_start, E_end; // Year month date time
+    time_t E_start, E_end;
+    string category, details, places;
+    unsigned long long id;
     
-    string category, details, places;    
     // note: can add more if want to
-
 public:
-//todo : write all func 
+    Event(string t = "", time_t s = 0, time_t e = 0, string c = "Default", 
+            string d = "", string p = "", unsigned long long i = 0){
+        title = t;
+        E_start = s;
+        E_end = e;
+        category = c;
+        details = d;
+        places = p;
+        id = i;
+    }
 
-    void create(); // to do : write  input
-    
-    // ? : use operator to know what edit or just write all func
-    void editString(char, string); 
-    void editTime(char, tuple<int,int,int,int>);
+    void setID(unsigned long long n) {
+        id = n;
+    }
 
     //return private variables
     string getTitle(){ return title; }
-    tuple<int,int,int,int> getStartTime(){ return E_start; }
-    tuple<int,int,int,int> getStartTime(){ return E_end; }
+    time_t getStartTime(){ return E_start; }
+    time_t getEndTime(){ return E_end; }
     string getCategory(){ return category; }
     string getDetails(){ return details; }
     string getPlaces(){ return places; }
+    unsigned long long getID(){ return id; }
+
+    // compare func for sort
+    // sort by start date, end date, id
+    bool operator<(const Event& a) const {
+        if (E_start != a.E_start) return E_start < a.E_start;
+        if (E_end != a.E_end) return E_end < a.E_end;
+        return id < a.id;
+    }
 };
 
-void Event::create(){
+class CalendarManager {
+private:
+    vector<Event> allEvents; // contains all events
     
-}
+    //todo : what we want to do with category na? write functions noi krub
+    //where we save all category d krub, maybe other file mai or in data file pai loi
+    vector<string> categories; // contains all categories ?????
 
-void Event::editString(char op , string temp){
-    // ? : do like this mai krub
+
+    string datafilename = "calendar_data.txt"; // save all events in this file na / can change name na krub
+
+    void sortEvents(); //function to sort all events (by date)
+    unsigned long long nextID = 1; // ID for each events, update every time we add new one 
+public:
+    CalendarManager(); // auto load
+    ~CalendarManager(); // auto save
+
+    //file I/O
+    void saveToFile();
+    void loadFromFile();
+
+    //core logic
+    bool addEvent(Event newEvent); // return true if add sucess
+    bool deleteEvent(int eventId); // return true if delete sucsees
+    bool editEvent(int eventId, Event updatedEvent); // return true if edit sucsess
+
+    // Find & Search
+    const vector<Event>& getAllEvents() const; // ใช้ const& ไม่ให้ copy ข้อมูล เปลืองแรม
+    vector<Event> getEventsByDate(int day, int month, int year);
+    vector<Event> searchEvents(string keyword);
+    vector<Event> getUpcomingEvents(int N); // next N events 
+    vector<string> getCategories();
+
+    //use to convert string to achieve categories
+    typeEvent stringToCategaries(string input)
+};
+
+// functions definitions
+
+CalendarManager::CalendarManager() {loadFromFile();}
+CalendarManager::~CalendarManager() {saveToFile();}
+
+void CalendarManager::loadFromFile() {
+    // todo : recieve all data from filename to vector<Event>
+    // dont forget to run id -> set nextID to maxid + 1
     
-    if(op == 't'){ // edit title
-        // ? : recheck word 
-        title = temp;
-    }
-    else if(op){
-        // bla bla bla
-    }
-
-    return;
+    // ? : if we already have data should we delete first ?
 }
 
-void Event::editTime(char, tuple<int,int,int,int>){
-    // edit what is not strings
+void CalendarManager::saveToFile() {
+    // todo : put all data from vector<Event>  to filename (aka. save functions)
 }
 
-// ------------------------------------------------
-// all others func.
+void CalendarManager::sortEvents() {
+    sort(allEvents.begin(), allEvents.end());
+}
 
-vector<Event> showWhatsNext(int); 
-// show first n Events that upcoming
 
-vector<Event> showthisdate(); 
-// show Events on this date 
-// ? : what should I input na
+bool CalendarManager::addEvent(Event newEvent){
+    if (newEvent.getStartTime() >= newEvent.getEndTime()) {
+        return false; //ตรวจสอบเวลา
+    }
+    newEvent.setID(nextID++); //run id
+    allEvents.push_back(newEvent);
+    this->sortEvents();//added event then sort
+    return true;
 
-vector<Event> showthisRange();
-// show Events on these range 
-// ? : what should I input na
+    
+    //return true if sucsess
+}
+bool CalendarManager::deleteEvent(unsigned long long eventId){
+    auto it = find_if(allEvents.begin(), allEvents.end(),
+        [eventId](const Event& e) {
+            return e.getID() == eventId;
+        });
 
-// ?? : can func 2 and 3 group together
+    if (it != allEvents.end()) {
+        allEvents.erase(it); //ลบ event
+        return true;
+    }
+    return false;
+}
 
-Event searchFor(string);
-// show event from serch
-// ? : return with pointer mai?
+bool CalendarManager::editEvent(unsigned long long eventId, Event updatedEvent) {
+    //todo : look for this eventId and update
+    //if the date is change then sort (or just sort every time)
+    //return true if sucsess
+    
+    for(auto &e: allEvents){
+  if(e.getID()==eventId){
+    
+    if(updatedEvent.getStartTime()>=updatedEvent.getEndTime())
+   return false;
+
+   updatedEvent.setID(eventId);
+   e = updatedEvent;
+
+   sortEvents();
+   return true;
+     }
+    }
+return false;
+
+}
+
+const vector<Event>& CalendarManager::getAllEvents() const {
+    return allEvents;
+}
+
+vector<Event> CalendarManager::getEventsByDate(int day, int month, int year) {
+    //todo : getallEvent on Date
+    //maybe using lowerbound
+}
+
+vector<Event> CalendarManager::searchEvents(string keyword) {
+    //todo : search for events by keyword  
+}
+
+vector<Event> CalendarManager::getUpcomingEvents(int N) {
+    vector<Event> upcoming;
+    int n = min(N, (int)allEvents.size());
+    for (int i = 0; i < n ; ++i) upcoming.push_back(allEvents[i]);
+    return upcoming;
+}
+
+vector<string> CalendarManager::getCategories() {
+    vector<string> type;
+    type.push_back("Work");
+    type.push_back("Personal");
+    type.push_back("Business");
+    type.push_back("Others");
+
+    return type;
+}
+
+typeEvent CalendarManager::stringToCategaries(string input) {
+    if (input == "Work") {
+        return typeEvent::Work;
+    }
+    else if (input == "Personal") {
+        return typeEvent::Personal;
+    }
+    else if (input == "Business") {
+        return typeEvent::Business;
+    }
+    else if (input == "Others") {
+        return typeEvent::Others;
+    }
+}
