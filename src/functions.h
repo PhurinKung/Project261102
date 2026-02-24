@@ -97,7 +97,7 @@ public:
     vector<string> getCategories();
 
     //use to convert string to achieve categories
-    typeEvent stringToCategaries(string input)
+    typeEvent stringToCategories(string input);
 };
 
 // functions definitions
@@ -198,7 +198,7 @@ vector<string> CalendarManager::getCategories() {
     return type;
 }
 
-typeEvent CalendarManager::stringToCategaries(string input) {
+typeEvent CalendarManager::stringToCategories(string input) {
     if (input == "Work") {
         return typeEvent::Work;
     }
@@ -209,6 +209,9 @@ typeEvent CalendarManager::stringToCategaries(string input) {
         return typeEvent::Business;
     }
     else if (input == "Others") {
+        return typeEvent::Others;
+    }
+    else {
         return typeEvent::Others;
     }
 }
