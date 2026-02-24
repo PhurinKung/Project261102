@@ -59,6 +59,14 @@ int main(int, char**)
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+    ImFont* thaiFont = io.Fonts->AddFontFromFileTTF(
+        "fonts/NotoSansThai-Regular.ttf",      // location
+        18.0f,                          // font's size
+        NULL,                           
+        io.Fonts->GetGlyphRangesThai()
+    );
+
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
