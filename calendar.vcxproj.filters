@@ -44,6 +44,9 @@
     <ClInclude Include="imgui\imgui.h">
       <Filter>imgui\Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>imgui\Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui\imgui.cpp">
