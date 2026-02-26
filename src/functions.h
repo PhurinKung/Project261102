@@ -11,6 +11,7 @@
 #include<vector>
 #include<ctime>
 #include<algorithm>
+#include<cctype>
 
 using namespace std;
 
@@ -133,6 +134,7 @@ bool CalendarManager::addEvent(Event newEvent){
     
     //return true if sucsess
 }
+
 bool CalendarManager::deleteEvent(unsigned long long eventId){
     vector<Event>::iterator it = allEvents.begin();
     while (it != allEvents.end() && it->getID() != eventId) ++it;
@@ -175,8 +177,31 @@ vector<Event> CalendarManager::getEventsByDate(int day, int month, int year) {
     //maybe using lowerbound
 }
 
+bool findthisword(string keyword,string source) {
+    transform(source.begin(), source.end(), source.begin(), ::tolower);
+    return (source.find(keyword) != string::npos);
+}
+
 vector<Event> CalendarManager::searchEvents(string keyword) {
-    //todo : search for events by keyword  
+    vector<Event> KeywordFoundEvents;
+    transform(keyword.begin(), keyword.end(), keyword.begin(), ::tolower);
+
+    for (auto i : allEvents) {
+        if (findthisword(keyword, i.getTitle())) {
+            KeywordFoundEvents.push_back(i);
+            continue;
+        }
+        if (findthisword(keyword, i.getCategory())) {
+            KeywordFoundEvents.push_back(i);
+            continue;
+        }
+        if (findthisword(keyword, i.getDetails())) {
+            KeywordFoundEvents.push_back(i);
+            continue;
+        }
+    }
+
+    return KeywordFoundEvents;
 }
 
 vector<Event> CalendarManager::getUpcomingEvents(int N) {
