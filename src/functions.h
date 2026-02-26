@@ -86,8 +86,8 @@ public:
 
     //core logic
     bool addEvent(Event newEvent); // return true if add sucess
-    bool deleteEvent(int eventId); // return true if delete sucsees
-    bool editEvent(int eventId, Event updatedEvent); // return true if edit sucsess
+    bool deleteEvent(unsigned long long eventId); // return true if delete sucsees
+    bool editEvent(unsigned long long eventId, Event updatedEvent); // return true if edit sucsess
 
     // Find & Search
     const vector<Event>& getAllEvents() const; // ใช้ const& ไม่ให้ copy ข้อมูล เปลืองแรม
@@ -134,11 +134,9 @@ bool CalendarManager::addEvent(Event newEvent){
     //return true if sucsess
 }
 bool CalendarManager::deleteEvent(unsigned long long eventId){
-    auto it = find_if(allEvents.begin(), allEvents.end(),
-        [eventId](const Event& e) {
-            return e.getID() == eventId;
-        });
-
+    vector<Event>::iterator it = allEvents.begin();
+    while (it != allEvents.end() && it->getID() != eventId) ++it;
+    
     if (it != allEvents.end()) {
         allEvents.erase(it); //ลบ event
         return true;
@@ -152,19 +150,19 @@ bool CalendarManager::editEvent(unsigned long long eventId, Event updatedEvent) 
     //return true if sucsess
     
     for(auto &e: allEvents){
-  if(e.getID()==eventId){
-    
-    if(updatedEvent.getStartTime()>=updatedEvent.getEndTime())
-   return false;
+        if(e.getID()==eventId){
+        
+            if(updatedEvent.getStartTime()>=updatedEvent.getEndTime())
+            return false;
 
-   updatedEvent.setID(eventId);
-   e = updatedEvent;
+            updatedEvent.setID(eventId);
+            e = updatedEvent;
 
-   sortEvents();
-   return true;
-     }
+            sortEvents();
+            return true;
+        }
     }
-return false;
+    return false;
 
 }
 
