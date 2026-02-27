@@ -6,6 +6,7 @@
 
 namespace cgui
 {
+
 	int FirstDayOfMonth(int, int);
 	int HowManyDaysInThisMonth(int, int);
 	void DrawCalendar();
@@ -295,9 +296,29 @@ namespace cgui
 	{
 		ImGui::Begin("Upcoming Event", NULL, ImGuiWindowFlags_NoCollapse);
 		int n_events = 5;
+		ImFont* Title = ImGui::GetIO().Fonts->Fonts[1];
+		ImGui::PushFont(Title);
+		ImGui::Text("Upcoming Events");
+		ImGui::PopFont();
 		for (int i = 0; i < n_events; i++) {
 			ImGui::BulletText("  waha ur date");
 		}
+
+		ImVec2 buttonSize(60, 60);
+
+		float WindowHeight = ImGui::GetWindowHeight();
+		float WindowWidth = ImGui::GetWindowWidth();
+
+		float targetY = WindowHeight - buttonSize.y - 30.0f; // 45 = 30 + 15 ---ระยะห่างขอบ + ระยะห่างของแต่ละปุ่ม
+		float targetX = WindowWidth - (2 * buttonSize.x) - 45.0f; // *2 since we have 2 buttons
+
+		ImGui::SetCursorPos(ImVec2(targetX, targetY));
+
+		ImGui::Button("search", buttonSize);
+		ImGui::SameLine(0.0f, 15.0f);
+		ImGui::Button("+", buttonSize);
+
+
 		ImGui::End();
 	}
 
