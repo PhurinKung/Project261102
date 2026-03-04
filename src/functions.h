@@ -52,7 +52,7 @@ enum class typeEvent {
     Others
 };
 
-class Event{
+class Event {
 private:
     string title;
     time_t E_start, E_end;
@@ -62,7 +62,7 @@ private:
     // note: can add more if want to
 public:
     Event(string t = "", time_t s = 0, time_t e = 0, string c = "Default", 
-            string d = "", string p = "", unsigned long long i = 0){
+		string d = "", string p = "", unsigned long long i = 0) {
         title = t;
         E_start = s;
         E_end = e;
@@ -77,13 +77,13 @@ public:
     }
 
     //return private variables
-    string getTitle(){ return title; }
-    time_t getStartTime(){ return E_start; }
-    time_t getEndTime(){ return E_end; }
-    string getCategory(){ return category; }
-    string getDetails(){ return details; }
-    string getPlaces(){ return places; }
-    unsigned long long getID(){ return id; }
+	string getTitle() const { return title; }
+	time_t getStartTime() const { return E_start; }
+	time_t getEndTime() const { return E_end; }
+	string getCategory() const { return category; }
+	string getDetails() const { return details; }
+	string getPlaces() const { return places; }
+	unsigned long long getID() const { return id; }
 
     // compare func for sort
     // sort by start date, end date, id
@@ -100,8 +100,7 @@ private:
     
     //todo : what we want to do with category na? write functions noi krub
     //where we save all category d krub, maybe other file mai or in data file pai loi
-    vector<string> categories; // contains all categories ?????
-
+	vector<string> categories = { "Work", "Personal", "Business", "Others" };
 
     string datafilename = "calendar_data.txt"; // save all events in this file na / can change name na krub
 
@@ -133,8 +132,8 @@ public:
 
 // functions definitions
 
-CalendarManager::CalendarManager() {loadFromFile();}
-CalendarManager::~CalendarManager() {saveToFile();}
+CalendarManager::CalendarManager() { loadFromFile(); }
+CalendarManager::~CalendarManager() { saveToFile(); }
 
 void CalendarManager::loadFromFile() {
     // todo : recieve all data from filename to vector<Event>
@@ -152,7 +151,7 @@ void CalendarManager::sortEvents() {
 }
 
 
-bool CalendarManager::addEvent(Event newEvent){
+bool CalendarManager::addEvent(Event newEvent) {
     if (newEvent.getStartTime() >= newEvent.getEndTime()) {
         return false; //ตรวจสอบเวลา
     }
@@ -165,9 +164,11 @@ bool CalendarManager::addEvent(Event newEvent){
     //return true if sucsess
 }
 
-bool CalendarManager::deleteEvent(unsigned long long eventId){
-    vector<Event>::iterator it = allEvents.begin();
-    while (it != allEvents.end() && it->getID() != eventId) ++it;
+bool CalendarManager::deleteEvent(unsigned long long eventId) {
+	auto it = find_if(allEvents.begin(), allEvents.end(),
+		[eventId](const Event& e) {
+			return e.getID() == eventId;
+		});
     
     if (it != allEvents.end()) {
         allEvents.erase(it); //ลบ event
@@ -181,11 +182,11 @@ bool CalendarManager::editEvent(unsigned long long eventId, Event updatedEvent) 
     //if the date is change then sort (or just sort every time)
     //return true if sucsess
     
-    for(auto &e: allEvents){
-        if(e.getID()==eventId){
-        
-            if(updatedEvent.getStartTime()>=updatedEvent.getEndTime())
+	if (updatedEvent.getStartTime() >= updatedEvent.getEndTime())
             return false;
+
+	for (auto& e : allEvents) {
+		if (e.getID() == eventId) {
 
             updatedEvent.setID(eventId);
             e = updatedEvent;
@@ -247,18 +248,12 @@ vector<Event> CalendarManager::searchEvents(string keyword) {
 vector<Event> CalendarManager::getUpcomingEvents(int N) {
     vector<Event> upcoming;
     int n = min(N, (int)allEvents.size());
-    for (int i = 0; i < n ; ++i) upcoming.push_back(allEvents[i]);
+	for (int i = 0; i < n; ++i) upcoming.push_back(allEvents[i]);
     return upcoming;
 }
 
 vector<string> CalendarManager::getCategories() {
-    vector<string> type;
-    type.push_back("Work");
-    type.push_back("Personal");
-    type.push_back("Business");
-    type.push_back("Others");
-
-    return type;
+	return categories;
 }
 
 typeEvent CalendarManager::stringToCategories(string input) {
