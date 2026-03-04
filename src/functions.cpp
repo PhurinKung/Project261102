@@ -1,7 +1,7 @@
 #include "functions.h"
 // complete all func in functions.h
 
-std::tuple<int, int, int, int, int> timeToDMY(time_t tme) { // day month year hour minute
+std::tuple<int, int, int, int, int> Utils::timeToDMY(time_t tme) { // day month year hour minute
 	tm local_time;
 	localtime_s(&local_time, &tme);
 
@@ -14,7 +14,7 @@ std::tuple<int, int, int, int, int> timeToDMY(time_t tme) { // day month year ho
 	return std::make_tuple(day, month, year, hour, minute);
 }
 
-//std::tuple<int, int, int, int, int> timeToDMY(time_t tme) { // day month year hour minute
+//std::tuple<int, int, int, int, int> Utils::timeToDMY(time_t tme) { // day month year hour minute
 //	tm* local_time = localtime(&tme);
 //
 //	int day = local_time->tm_mday;       // (1 - 31)
@@ -26,7 +26,7 @@ std::tuple<int, int, int, int, int> timeToDMY(time_t tme) { // day month year ho
 //	return std::make_tuple(day, month, year, hour, minute);
 //}
 
-time_t DMYtoTime(int day, int month, int year, int hour , int minute ) {
+time_t Utils::DMYtoTime(int day, int month, int year, int hour , int minute ) {
 	tm time_info = { 0 };
 
 	time_info.tm_mday = day;
@@ -48,48 +48,92 @@ CalendarManager::~CalendarManager() { saveToFile();  }
 
 void CalendarManager::loadFromFile() {
 	//load from data
-	std::ifstream src(data_filename);
+	std::ifstream datasrc(data_filename);
+	
 	std::string line;
 
-	if (!src.is_open()) return;
-	
-	allEvents.clear();
+	if (datasrc.is_open()) {
+		allEvents.clear();
 
-	unsigned long long MAXID = 0;
-	while (getline(src, line)) {
-		if (line.empty()) continue;
+		unsigned long long MAXID = 0;
+		while (getline(datasrc, line)) {
+			if (line.empty()) continue;
 
-		std::stringstream S(line);
-		std::string temporary;
-		std::vector<std::string> data;
+			std::stringstream S(line);
+			std::string temporary;
+			std::vector<std::string> data;
 		
-		while (getline(S, temporary, '|')) {
-			data.push_back(temporary);
+			while (getline(S, temporary, '|')) {
+				data.push_back(temporary);
+			}
+
+			if (data.size() != 7) continue;
+
+			try {
+				std::string title = data[0];
+				time_t StartTime = stoll(data[1])
+					, EndTime = stoll(data[2]);
+				std::string category = data[3]
+					, detail = data[4]
+					, place = data[5];
+				unsigned long long ID = stoull(data[6]);
+
+				Event LoadedEvent(title, StartTime, EndTime, category, detail, place, ID);
+				allEvents.push_back(LoadedEvent);
+
+				MAXID = std::max(ID, MAXID);
+			}
+			catch(const std::exception& e){
+				continue;
+			}
 		}
 
-		if (data.size() != 7) return;
-
-		std::string title = data[0];
-		time_t StartTime = stoll(data[1])
-			, EndTime = stoll(data[2]);
-		std::string category = data[3]
-			, detail = data[4]
-			, place = data[5];
-		unsigned long long ID = stoull(data[6]);
-
-		Event LoadedEvent(title,StartTime,EndTime,category,detail,place,ID);
-		this->addEvent(LoadedEvent);
-
-		MAXID = std::max(ID,MAXID);
-	}
-
-	src.close();
+		datasrc.close();
 	
-	nextID = MAXID + 1;
-	this->sortEvents();
+		nextID = MAXID + 1;
+		this->sortEvents();
+	}
 	
 	//todo : load category files
-	
+
+	std::ifstream catsrc(categories_data_filename);
+	if (catsrc.is_open()) {
+		while (getline(catsrc, line)) {
+			if (line.empty()) continue;
+
+			std::stringstream S(line);
+			std::string temporary;
+			std::vector<std::string> data;
+
+			while (std::getline(S, temporary, '|')) {
+				data.push_back(temporary);
+			}
+
+			if (data.size() != 5) continue;
+
+			try {
+				std::string category_name = data[0];
+				float r = stof(data[1]),
+					g = stof(data[2]),
+					b = stof(data[3]),
+					a = stof(data[4]);
+
+				EventCategory LoadCategory(category_name, r, g, b, a);
+				categories.push_back(LoadCategory);
+			}
+			catch (const std::exception& e) {
+				continue;
+			}
+		}
+
+		catsrc.close();
+	}
+	else {
+		categories.push_back(EventCategory("Personal", 1.0f, 1.0f, 1.0f, 1.0f)); // สีขาว
+		categories.push_back(EventCategory("Study", 0.2f, 0.6f, 1.0f, 1.0f)); // สีฟ้า
+		categories.push_back(EventCategory("Emergency", 1.0f, 0.2f, 0.2f, 1.0f)); // สีแดง
+	}
+
 	return ;
 }
 
@@ -118,6 +162,7 @@ void CalendarManager::saveToFile() {
 	}
 
 	dest.close();
+	// end ---- save category
 
 	return;
 }
@@ -154,10 +199,6 @@ std::pair<bool, std::string> CalendarManager::deleteEvent(unsigned long long eve
 }
 
 std::pair<bool, std::string> CalendarManager::editEvent(unsigned long long eventId, Event updatedEvent) {
-	//todo : look for this eventId and update
-	//if the date is change then sort (or just sort every time)
-	//return true if sucsess
-
 	if (updatedEvent.getStartTime() > updatedEvent.getEndTime())
 		return { false , "Start time must less than or equal to End time" };
 
@@ -175,6 +216,19 @@ std::pair<bool, std::string> CalendarManager::editEvent(unsigned long long event
 	return { false, ErrorMSG };
 }
 
+std::pair<bool, std::string> CalendarManager::addCategory(EventCategory newCategory) {
+	std::string name = newCategory.getname();
+
+	for (const auto& i : categories) {
+		if (name == i.getname()) {
+			return { false, "already have this category !" };
+		}
+	}
+
+	categories.push_back(newCategory);
+	return { true, "Success" };
+}
+
 const std::vector<Event>& CalendarManager::getAllEvents() const {
 	return allEvents;
 }
@@ -183,8 +237,8 @@ std::vector<Event> CalendarManager::getEventsByDate(int day, int month, int year
 	//todo : getallEvent on Date
 	std::vector<Event> eventsOnDate;
 
-	time_t startofthisdate = DMYtoTime(day, month, year, 0, 0);
-	time_t endofthisdate = DMYtoTime(day, month, year, 23, 59);
+	time_t startofthisdate = Utils::DMYtoTime(day, month, year, 0, 0);
+	time_t endofthisdate = Utils::DMYtoTime(day, month, year, 23, 59);
 
 	for (const auto& i : allEvents) {
 		if (i.getEndTime() >= startofthisdate && i.getStartTime() <= endofthisdate)
@@ -194,27 +248,28 @@ std::vector<Event> CalendarManager::getEventsByDate(int day, int month, int year
 	return eventsOnDate;
 }
 
-bool findthisword(std::string keyword, std::string source) {
-	transform(source.begin(), source.end(), source.begin(), ::tolower);
+std::string Utils::ToLowerSafe(std::string s) {
+	for (auto& i : s) {
+		i = tolower((unsigned char)i);
+	}
+	return s;
+}
+
+bool Utils::findthisword(const std::string & keyword, std::string source) {
+	source = Utils::ToLowerSafe(source);
+
 	return (source.find(keyword) != std::string::npos);
 }
 
 std::vector<Event> CalendarManager::searchEvents(std::string keyword) {
 	std::vector<Event> KeywordFoundEvents;
-	transform(keyword.begin(), keyword.end(), keyword.begin(), ::tolower);
+	keyword = Utils::ToLowerSafe(keyword);
 
-	for (auto i : allEvents) {
-		if (findthisword(keyword, i.getTitle())) {
+	for (const auto& i : allEvents) {
+		if (Utils::findthisword(keyword, i.getTitle())
+			|| Utils::findthisword(keyword, i.getCategory())
+			|| Utils::findthisword(keyword, i.getDetails())) {
 			KeywordFoundEvents.push_back(i);
-			continue;
-		}
-		if (findthisword(keyword, i.getCategory())) {
-			KeywordFoundEvents.push_back(i);
-			continue;
-		}
-		if (findthisword(keyword, i.getDetails())) {
-			KeywordFoundEvents.push_back(i);
-			continue;
 		}
 	}
 
@@ -223,8 +278,9 @@ std::vector<Event> CalendarManager::searchEvents(std::string keyword) {
 
 std::vector<Event> CalendarManager::getUpcomingEvents(int N) {
 	std::vector<Event> upcoming;
-	int n = std::min(N, (int)allEvents.size());
-	for (int i = 0; i < n; ++i) upcoming.push_back(allEvents[i]);
+
+	//todo : check every event and compare with time_t 
+
 	return upcoming;
 }
 

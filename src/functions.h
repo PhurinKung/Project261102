@@ -8,11 +8,17 @@
 #include<ctime>
 #include<algorithm>
 #include<cctype>
+#include <exception>
 #include <sstream>
 
-std::tuple<int, int, int, int, int> timeToDMY(time_t tme);
+class Utils {
+public:
+	static std::tuple<int, int, int, int, int> timeToDMY(time_t tme);
+	static time_t DMYtoTime(int day, int month, int year, int hour = 0, int minute = 0);
 
-time_t DMYtoTime(int day, int month, int year, int hour = 0, int minute = 0);
+	static std::string ToLowerSafe(std::string s);
+	static bool findthisword(const std::string& keyword, std::string source);
+};
 
 class Event {
 private:
@@ -60,9 +66,18 @@ class EventCategory {
 private:
 	std::string category;
 	float r, g, b, a;
+	
+	std::string toPatternName(std::string s) {
+		if (s.empty()) return s;
+
+		s = Utils::ToLowerSafe(s);
+		s[0] = toupper((unsigned char)s[0]);
+		return s;
+	}
+
 public:
 	EventCategory(std::string name, float R, float G, float B, float A) {
-		category = name;
+		category = toPatternName(name);
 		r = R;
 		g = G;
 		b = B;
@@ -97,11 +112,14 @@ public:
 	std::pair<bool, std::string> deleteEvent(unsigned long long eventId); // return status and error message
 	std::pair<bool, std::string> editEvent(unsigned long long eventId, Event updatedEvent); // return status and error message
 
+	std::pair<bool, std::string> addCategory(EventCategory newCategory);
+
 	// Find & Search
 	const std::vector<Event>& getAllEvents() const; // ใช้ const& ไม่ให้ copy ข้อมูล เปลืองแรม
 	std::vector<Event> getEventsByDate(int day, int month, int year);
 	std::vector<Event> searchEvents(std::string keyword);
 	std::vector<Event> getUpcomingEvents(int N); // next N events 
+
 
 	std::vector<std::string> getCategories();
 	std::vector<std::pair<std::string, std::tuple<float, float, float, float >>> getColorCategory(); // return pair <string name,tuple RGBA>
