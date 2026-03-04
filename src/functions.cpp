@@ -14,7 +14,7 @@ tuple<int, int, int, int, int> timeToDMY(time_t tme) { // day month year hour mi
 	return make_tuple(day, month, year, hour, minute);
 }
 
-time_t DMYtoTime(int day, int month, int year, int hour = 0, int minute = 0) {
+time_t DMYtoTime(int day, int month, int year, int hour , int minute ) {
 	tm time_info = { 0 };
 
 	time_info.tm_mday = day;
