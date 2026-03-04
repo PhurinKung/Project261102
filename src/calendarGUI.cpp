@@ -11,6 +11,7 @@ namespace cgui
 	static int ThisMonth = 1;
 	static int selected_day = -1; // -1 means no day is selected yet
 	static bool createnewcategory = false;
+	static CalendarManager myCalendar;
 
 	int FirstDayOfMonth(int, int);
 	int HowManyDaysInThisMonth(int, int);
@@ -26,8 +27,6 @@ namespace cgui
 		std::string name;
 		ImVec4 color;
 	};
-
-	void DrawCustomWindow();
 
 	void ThewholecalendarGUI() 
 	{
@@ -59,58 +58,13 @@ namespace cgui
 		}
 
 		ImGui::DockSpaceOverViewport(dockspace_id, ImGui::GetMainViewport());
-		//ImGui::DockSpaceOverViewport();
 		DrawCalendarV2();
 		showevent();
-		//DrawCustomWindow();
 		UpcomingEvent();
 		NewEvent();
 		SearchEvent();
 		CreateNewCategory();
 	}
-
-	void DrawCustomWindow() {
-		//i just wanna see how to layout and style in imgui so this is just example window codes
-		// --- WINDOW CUSTOMIZATION ---
-		// 1. Change the background color of the window (R, G, B, Alpha)
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.12f, 0.11f, 0.16f, 1.00f));
-		// 2. Make the window corners rounded
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
-
-		// Create the window
-		ImGui::Begin("Custom Window Name");
-
-		// --- FONT CUSTOMIZATION ---
-
-		ImGui::Text("Here is my custom text!");
-		ImGui::Dummy(ImVec2(0.0f, 10.0f)); // Adds vertical spacing
-
-		// --- BUTTON CUSTOMIZATION ---
-		// 4. Set the three states of button colors
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.35f, 0.31f, 0.47f, 1.0f));        // Normal
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.45f, 0.41f, 0.57f, 1.0f)); // Hovering
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.25f, 0.21f, 0.37f, 1.0f));  // Clicked
-
-		// 5. Round the button corners
-		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 5.0f);
-
-		// Create the button (Width, Height)
-		if (ImGui::Button("Click Me", ImVec2(120, 40))) {
-			// Code to run when clicked goes here
-		}
-
-		// --- CLEANUP (CRITICAL) ---
-		// 6. You must Pop exactly the number of times you Pushed inside this section!
-		ImGui::PopStyleVar(1);   // Removes Button Rounding
-		ImGui::PopStyleColor(3); // Removes the 3 Button Colors
-
-		ImGui::End(); // Ends the Window
-
-		// Clean up the Window customizations pushed before ImGui::Begin
-		ImGui::PopStyleVar(1);   // Removes Window Rounding
-		ImGui::PopStyleColor(1); // Removes Window Background Color
-	}
-
 	void showevent() {
 		// 1. Create a window class to override the docking behavior
 		ImGuiWindowClass window_class;
@@ -120,26 +74,31 @@ namespace cgui
 		// 2. Begin your window (keep NoTitleBar so it stays clean if you ever undock it)
 		ImGui::Begin("showevent", nullptr, ImGuiWindowFlags_NoTitleBar);
 		ImGui::SetWindowFontScale(1.25f);
-		std::vector<std::string>events = {"one day", "ow day"};
 		if (selected_day != -1)
 		{
 			// Print the date they clicked
-			//ImGui::Text("Events for: %02d/%02d/%d", selected_day, ThisMonth, ThisYear);
-			//ImGui::Separator();
-			if (!events.empty())
+			std::vector<Event> events_today = myCalendar.getEventsByDate(selected_day, ThisMonth, ThisYear);
+			if (!events_today.empty())
 			{
 				if (ImGui::BeginTabBar("EventTabs")) {
-					for (auto& tab : events) {
-						if (ImGui::BeginTabItem(tab.c_str())) {
+					for (auto& ev : events_today) {
+						if (ImGui::BeginTabItem(ev.getTitle().c_str())) {
 							ImGui::SetWindowFontScale(1.75f);
-							ImGui::Text("%s", tab.c_str());
+							ImGui::Text("%s", ev.getTitle().c_str());
 							ImGui::SetWindowFontScale(1.25f);
-							//ImGui::Dummy(ImVec2(0.0f, 0.5f));
-							ImGui::Text("%02d/%02d/%d", selected_day, ThisMonth, ThisYear);
 
-							ImGui::Text("Time : %d");
-							ImGui::Text("location : %s");
+							ImGui::Text("%02d/%02d/%d", selected_day, ThisMonth, ThisYear);
+							auto [s_day, s_mon, s_year, s_hour, s_min] = timeToDMY(ev.getStartTime());
+							auto [e_day, e_mon, e_year, e_hour, e_min] = timeToDMY(ev.getEndTime());
+
+							// 5. Print the exact details
+							ImGui::Text("Start Time : %02d:%02d", s_hour, s_min);
+							ImGui::Text("End Time   : %02d:%02d", e_hour, e_min);
+							ImGui::Text("Category   : %s", ev.getCategory().c_str());
+							ImGui::Text("Location   : %s", ev.getPlaces().c_str());
+
 							ImGui::SeparatorText("Details");
+							ImGui::TextWrapped("%s", ev.getDetails().c_str());
 
 							ImGui::EndTabItem();
 						}
@@ -149,7 +108,7 @@ namespace cgui
 
 			}
 			else {
-				ImGui::TextDisabled("Empty");
+				ImGui::TextDisabled("No event for this day.");
 			}
 		}
 		else
@@ -159,6 +118,7 @@ namespace cgui
 		}
 		ImGui::End();
 	}
+
 	void thisistest(){
 
 		// 1. Create a window class to override the docking behavior
@@ -226,8 +186,12 @@ namespace cgui
 		ImGui::SetNextWindowClass(&window_class);
 
 		ImGui::Begin("Calendar", NULL, ImGuiWindowFlags_NoTitleBar);
-		static int ThisYear = 2026; //recive from input kub
-		static int ThisMonth = 1; //also this na
+
+		//get current date for month and year as a default opening kub
+		std::time_t currentTime = std::time(nullptr);
+		auto [current_day, current_month, current_year, current_hour, current_minute] = timeToDMY(currentTime);
+		static int ThisYear = current_year; 
+		static int ThisMonth = current_month;
 
 		const char* month_names[] = { "January", "February", "March", "April", "May", "June",
 										 "July", "August", "September", "October", "November", "December" };
@@ -255,24 +219,23 @@ namespace cgui
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 1.0f, 1.0f, 0.1f)); // ตอนเมาส์ชี้ (ไฮไลท์จางๆ ถ้าไม่ชอบให้เปลี่ยนตัวท้ายเป็น 0.0f)
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1.0f, 1.0f, 1.0f, 0.2f)); // ตอนกดคลิก
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f)); // ตัวอักษรสีขาว
-		//ย้อนกลับ <
-		if (ImGui::Button("<", ImVec2(box_w, 0))) {
+		
+		if (ImGui::ArrowButton("##left", ImGuiDir_Left)) { 
 			ThisMonth--;
 			if (ThisMonth < 1) {
 				ThisMonth = 12;
 				ThisYear--;
 			}
 		}
-
-		//ถัดไป >
-		ImGui::SameLine();
-		if (ImGui::Button(">", ImVec2(box_w, 0))) {
+		ImGui::SameLine(0.0f, spacing);
+		if (ImGui::ArrowButton("##right", ImGuiDir_Right)) { 
 			ThisMonth++;
 			if (ThisMonth > 12) {
 				ThisMonth = 1;
 				ThisYear++;
 			}
 		}
+
 		ImGui::PopStyleColor(4);
 		ImGui::Dummy(ImVec2(0.0f, 5.0f));
 		ImGui::Separator();
@@ -330,7 +293,10 @@ namespace cgui
 						draw_list->AddText(text_pos, ImGui::GetColorU32(ImGuiCol_Text), day_str.c_str());
 						
 						// fill event dots if there are any
-						int num_events = 3; // Example: test with more than 8
+						std::vector<Event> events_today = myCalendar.getEventsByDate(nday, ThisMonth, ThisYear);
+						int num_events = events_today.size();
+
+						auto category_color = myCalendar.getColorCategory();
 
 						if (num_events > 0)
 						{
@@ -347,13 +313,6 @@ namespace cgui
 							float total_height = (num_rows * dot_size) + ((num_rows - 1) * row_spacing);
 							float start_y = cursor_pos.y + (cell_h - total_height) * 0.5f + dot_radius;
 
-							ImU32 category_colors[] = {
-								IM_COL32(255, 50, 50, 150),
-								IM_COL32(50, 255, 50, 150),
-								IM_COL32(50, 150, 255, 150),
-								IM_COL32(255, 200, 50, 150)
-							};
-
 							for (int row = 0; row < num_rows; ++row)
 							{
 								// Calculate how many dots are in this specific row
@@ -367,44 +326,29 @@ namespace cgui
 								for (int col = 0; col < dots_in_this_row; ++col)
 								{
 									int event_index = row * max_per_row + col;
-									ImU32 dot_color = category_colors[event_index % 4];
+									ImU32 dot_color = IM_COL32(150, 150, 150, 200);
 
+									// --- 2. เช็ค Category และดึงสีมาใช้ ---
+									if (event_index < events_today.size()) {
+										std::string cat_name = events_today[event_index].getCategory();
+
+										for (const auto& cat : category_color) {
+											if (cat.first == cat_name) {
+												// Unpack Tuple กลับมาเป็น r, g, b, a
+												auto [r, g, b, a] = cat.second;
+
+												// แปลงทศนิยมเป็นรหัสสี ImU32
+												dot_color = ImGui::ColorConvertFloat4ToU32(ImVec4(r, g, b, a));
+												break;
+											}
+										}
+									}
 									draw_list->AddCircleFilled(ImVec2(current_x, current_y), dot_radius, dot_color);
 
 									current_x += dot_size + dot_spacing;
 								}
 							}
 						}
-						/*
-						if (nday) // is there any event on this day?
-						{
-							float event_y = cursor_pos.y + offset_y + text_size.y + 6.0f;
-							for (int i = 0; i < 4; i++) {
-								const char* event_text = " Event Namesgfdgsdsgs";
-								ImVec2 event_size = ImGui::CalcTextSize(event_text);
-
-								float padding_x = 5.0f; // Margin on the left and right
-								float event_x = cursor_pos.x + padding_x;
-								float max_x = cursor_pos.x + cell_w - padding_x;
-								float max_y = cursor_pos.y + cell_h;
-								ImVec2 event_pos = ImVec2(event_x, event_y);
-
-								ImU32 highlight_color = IM_COL32(0, 0, 200, 150);
-								draw_list->AddRectFilled(
-									event_pos,
-									ImVec2(max_x, event_pos.y + event_size.y),
-									highlight_color,
-									2.0f //rounding
-								);
-
-								ImGui::PushClipRect(event_pos, ImVec2(max_x,max_y), true); //ตัดอักษรที่เกินhighlight ออกนะ
-								draw_list->AddText(event_pos, IM_COL32(255, 255, 255, 255), event_text);
-								ImGui::PopClipRect();
-								event_y = event_y + event_size.y + 6.0f;
-								if (event_y + event_size.y + 4.0f > max_y) break;
-							}
-						}
-						*/
 						ImGui::PopID(); // คืนค่า ID
 						nday++;
 					}
@@ -747,24 +691,41 @@ namespace cgui
 
 		ImGui::Begin("Upcoming Event", NULL, ImGuiDockNodeFlags_NoTabBar);
 		ImGui::SetWindowFontScale(1.25f);
-		int n_events = 5;
+		std::vector<Event> upcoming_events = myCalendar.getUpcomingEvents(5);
 		ImFont* Title = ImGui::GetIO().Fonts->Fonts[1];
 		ImGui::PushFont(Title);
 		ImGui::Text("Upcoming Events");
 		ImGui::PopFont();
-		for (int i = 0; i < n_events; i++) {
-			ImGui::PushID(i);
-			const char* event_name = "jdkas";
-			if (ImGui::CollapsingHeader(event_name)) {
-				ImGui::Text("%02d/%02d/%d", selected_day, ThisMonth, ThisYear);
-				ImGui::SeparatorText("Time");
-				ImGui::Text("10:00AM");
-				ImGui::SeparatorText("Location");
-				ImGui::SeparatorText("Details");
+
+		if (upcoming_events.empty()) {
+			ImGui::TextDisabled("No upcoming events.");
+		}
+		else {
+			for (int i = 0; i < upcoming_events.size(); i++) {
+				const Event& ev = upcoming_events[i];
+				ImGui::PushID(ev.getID());
+				const char* event_name = "jdkas";
+				if (ImGui::CollapsingHeader(ev.getTitle().c_str())) {
+
+					auto [s_day, s_month, s_year, s_hour, s_min] = timeToDMY(ev.getStartTime());
+					auto [e_day, e_month, e_year, e_hour, e_min] = timeToDMY(ev.getEndTime());
+
+					ImGui::Text("Date: %02d/%02d/%d", s_day, s_month, s_year);
+
+					ImGui::SeparatorText("Time");
+					ImGui::Text("%02d:%02d - %02d:%02d", s_hour, s_min, e_hour, e_min);
+
+					ImGui::SeparatorText("Location");
+					ImGui::Text("%s", ev.getPlaces().c_str());
+
+					ImGui::SeparatorText("Details");
+					ImGui::TextWrapped("%s", ev.getDetails().c_str()); // ใช้ TextWrapped เผื่อพิมพ์ยาวจะได้ไม่ทะลุขอบ
+				}
+				ImGui::PopID();
 			}
-			ImGui::PopID();
 		}
 
+		//----------------------------------------------
 		ImVec2 buttonSize(60, 60);
 
 		float WindowHeight = ImGui::GetWindowHeight();
