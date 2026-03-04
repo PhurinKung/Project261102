@@ -666,6 +666,10 @@ namespace cgui
 		ImGui::End();
 	}
 
+	void CreateNewCategory() {
+
+	}
+
 	void UpcomingEvent()
 	{
 		ImGui::Begin("Upcoming Event", NULL, ImGuiWindowFlags_NoCollapse);
