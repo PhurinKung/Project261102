@@ -22,11 +22,6 @@ namespace cgui
 	void SearchEvent();
 	void CreateNewCategory();
 	void showevent();
-	
-	struct EventCategory {
-		std::string name;
-		ImVec4 color;
-	};
 
 	void ThewholecalendarGUI() 
 	{
@@ -214,12 +209,13 @@ namespace cgui
 		// ใช้ SameLine แล้วใส่ค่า offset เข้าไป เพื่อดันปุ่มไปขวาสุด
 		ImGui::SameLine(right_align_x);
 
-		// ดันการตั้งค่าสีใหม่เข้าไป: ทำให้กล่องโปร่งใส และตัวหนังสือสีขาว
+		//ทำให้กล่องโปร่งใส และตัวหนังสือสีขาว
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // พื้นหลังปกติโปร่งใส (No box)
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 1.0f, 1.0f, 0.1f)); // ตอนเมาส์ชี้ (ไฮไลท์จางๆ ถ้าไม่ชอบให้เปลี่ยนตัวท้ายเป็น 0.0f)
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1.0f, 1.0f, 1.0f, 0.2f)); // ตอนกดคลิก
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f)); // ตัวอักษรสีขาว
 		
+		// > <
 		if (ImGui::ArrowButton("##left", ImGuiDir_Left)) { 
 			ThisMonth--;
 			if (ThisMonth < 1) {
@@ -667,15 +663,23 @@ namespace cgui
 			if (ImGui::Button("Save Color", ImVec2(120, 0))) {
 				if (strlen(new_category) > 0) {
 
-					EventCategory new_cat;
-					new_cat.name = new_category;
-					new_cat.color = color;
+					// ImVec4 stores RGBA as x, y, z, w
+					EventCategory new_cat(std::string(new_category),
+						color.x, // R
+						color.y, // G
+						color.z, // B
+						color.w  // A
+					);
+					// 2. Push it to your main CalendarManager instance
+					//categories.push_back(new_cat); //ยังไม่มีfunction add category
+
+					// 3. Clear the text box so it's empty next time the popup opens
+					memset(new_category, 0, sizeof(new_category));
 					my_categories.push_back(new_cat);
 
 					//Clear the text box so it's empty next time the popup opens
 					memset(new_category, 0, sizeof(new_category));
 
-					//cgui::SaveCategories();
 				}
 				ImGui::CloseCurrentPopup();
 			}
