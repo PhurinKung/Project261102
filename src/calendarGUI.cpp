@@ -8,6 +8,7 @@
 
 namespace cgui
 {
+
 	static int ThisYear = 2026;
 	static int ThisMonth = 1;
 	static int selected_day = -1; // -1 means no day is selected yet
@@ -18,6 +19,9 @@ namespace cgui
 	void DrawCalendarV2();
 	void thisistest();
 	void UpcomingEvent();
+	void NewEvent();
+	
+
 	void DrawCustomWindow();
 	void showevent();
 
@@ -56,6 +60,7 @@ namespace cgui
 		showevent();
 		//DrawCustomWindow();
 		UpcomingEvent();
+		NewEvent();
 	}
 
 	void DrawCustomWindow() {
@@ -448,10 +453,73 @@ namespace cgui
 		ImGui::End();
 	}
 
+	bool isNewEventOpen = false;
+	void NewEvent() {
+		if (isNewEventOpen) {
+
+			ImVec2 screenSize = ImGui::GetIO().DisplaySize;
+			ImVec2 targetSize(screenSize.x * 0.5f, screenSize.y * 0.6f);
+			ImGui::SetNextWindowSize(targetSize, ImGuiCond_Always);
+
+			ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
+			ImGui::Begin("New Event", &isNewEventOpen, ImGuiWindowFlags_NoResize);
+
+			ImFont* Title = ImGui::GetIO().Fonts->Fonts[1];
+			ImGui::PushFont(Title);
+			ImGui::Text("New Event");
+			ImGui::PopFont();
+
+			ImGui::SetNextItemWidth(-20.0f);
+			static char event_name[100] = "Event's name"; //event's name
+			ImGui::InputText("##Event_Name", event_name, sizeof(event_name));
+			// วางคำสั่งนี้ลอยๆ ได้เลย ข้อความจะถูกเซฟลง event_name ตลอดเวลาที่พิมพ์
+
+			ImGui::SetNextItemWidth(-20.0f);
+			static char location[250] = "Location"; //the location
+			ImGui::InputText("##Location", location, sizeof(location));
+
+			//categories
+			ImGui::SetNextItemWidth(150.0f);
+			static int selectedItem = 0;
+			const char* items[] = { "Work", "Personal", "Business", "Others" };
+			ImGui::Combo("###Select Fruit", &selectedItem, items, IM_ARRAYSIZE(items));
+
+
+
+			//details
+			static char detail[1024] = "";
+			ImVec2 boxSize(-20.0f, 150.0f);
+			ImGui::InputTextMultiline("##Detail", detail, sizeof(detail), boxSize);
+
+			ImVec2 buttonSize(50, 35);
+
+			float WindowHeight = ImGui::GetWindowHeight();
+			float WindowWidth = ImGui::GetWindowWidth();
+
+			float targetY = WindowHeight - buttonSize.y - 20.0f;
+			float targetX = WindowWidth - buttonSize.x - 20.0f;
+
+			ImGui::SetCursorPos(ImVec2(targetX, targetY));
+
+			if (ImGui::Button("save", buttonSize)) {
+				// This is where you trigger your logic!
+
+				// Clear the text box after saving (optional)
+			}
+
+			ImGui::End();
+			ImGui::PopStyleColor();
+		}
+	}
+
 	void UpcomingEvent()
 	{
 		ImGui::Begin("Upcoming Event", NULL, ImGuiWindowFlags_NoCollapse);
 		int n_events = 5;
+		ImFont* Title = ImGui::GetIO().Fonts->Fonts[1];
+		ImGui::PushFont(Title);
+		ImGui::Text("Upcoming Events");
+		ImGui::PopFont();
 		for (int i = 0; i < n_events; i++) {
 			ImGui::PushID(i);
 			const char* event_name = "jdkas";
@@ -464,6 +532,26 @@ namespace cgui
 			}
 			ImGui::PopID();
 		}
+
+		ImVec2 buttonSize(60, 60);
+
+		float WindowHeight = ImGui::GetWindowHeight();
+		float WindowWidth = ImGui::GetWindowWidth();
+
+		float targetY = WindowHeight - buttonSize.y - 30.0f; // 45 = 30 + 15 ---ระยะห่างขอบ + ระยะห่างของแต่ละปุ่ม
+		float targetX = WindowWidth - (2 * buttonSize.x) - 45.0f; // *2 since we have 2 buttons
+
+		ImGui::SetCursorPos(ImVec2(targetX, targetY));
+
+		ImGui::Button("search", buttonSize);
+		ImGui::SameLine(0.0f, 15.0f);
+		ImGui::PushFont(Title);
+		if (ImGui::Button("+", buttonSize)) {
+			isNewEventOpen = true;
+		}
+		ImGui::PopFont();
+
+
 		ImGui::End();
 	}
 
@@ -489,4 +577,6 @@ namespace cgui
 		mktime(&timestamp);
 		return timestamp.tm_mday;
 	}
+
+
 }
