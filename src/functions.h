@@ -1,10 +1,9 @@
 #pragma once
 
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
-
-
 #include<iostream>
 #include<tuple>
 #include<string>
@@ -45,13 +44,6 @@ time_t DMYtoTime(int day, int month, int year, int hour = 0, int minute = 0) {
 	return mktime(&time_info);
 }
 
-enum class typeEvent {
-    Work,
-    Personal,
-    Business,
-    Others
-};
-
 class Event {
 private:
     string title;
@@ -62,7 +54,7 @@ private:
     // note: can add more if want to
 public:
     Event(string t = "", time_t s = 0, time_t e = 0, string c = "Default", 
-		string d = "", string p = "", unsigned long long i = 0) {
+		string d = "", string p = "", unsigned long long i = 0) { // title
         title = t;
         E_start = s;
         E_end = e;
@@ -94,13 +86,28 @@ public:
     }
 };
 
+class EventCategory {
+private:
+	string category;
+	float r, g, b, a;
+public:
+	EventCategory(string name, float R, float G, float B, float A) {
+		category = name;
+		r = R;
+		g = G;
+		b = B;
+		a = A;
+	}
+
+	string getname() const { return category; }
+	tuple<float, float, float, float> getRGB() const { return { r,g,b,a }; }
+};
+
 class CalendarManager {
 private:
     vector<Event> allEvents; // contains all events
     
-    //todo : what we want to do with category na? write functions noi krub
-    //where we save all category d krub, maybe other file mai or in data file pai loi
-	vector<string> categories = { "Work", "Personal", "Business", "Others" };
+	vector<EventCategory> categories;
 
     string datafilename = "calendar_data.txt"; // save all events in this file na / can change name na krub
 
@@ -124,10 +131,9 @@ public:
     vector<Event> getEventsByDate(int day, int month, int year);
     vector<Event> searchEvents(string keyword);
     vector<Event> getUpcomingEvents(int N); // next N events 
-    vector<string> getCategories();
 
-    //use to convert string to achieve categories
-    typeEvent stringToCategories(string input);
+    vector<string> getCategories();
+	vector<pair<string, tuple<float, float, float, float >>> getColorCategory(); // return pair <string name,tuple RGBA>
 };
 
 // functions definitions
@@ -253,23 +259,17 @@ vector<Event> CalendarManager::getUpcomingEvents(int N) {
 }
 
 vector<string> CalendarManager::getCategories() {
-	return categories;
+	vector<string> vec;
+	for (const auto& i : categories) {
+		vec.push_back(i.getname());
+	}
+	return vec;
 }
 
-typeEvent CalendarManager::stringToCategories(string input) {
-    if (input == "Work") {
-        return typeEvent::Work;
+vector<pair<string, tuple<float, float, float, float >>> CalendarManager::getColorCategory() {
+	vector<pair<string, tuple<float, float, float, float>>> vec;
+	for (const auto& i : categories) {
+		vec.push_back({ i.getname(),i.getRGB() });
     }
-    else if (input == "Personal") {
-        return typeEvent::Personal;
-    }
-    else if (input == "Business") {
-        return typeEvent::Business;
-    }
-    else if (input == "Others") {
-        return typeEvent::Others;
-    }
-    else {
-        return typeEvent::Others;
-    }
+	return vec;
 }
