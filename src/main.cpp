@@ -9,6 +9,7 @@
 #pragma comment(lib, "d3dcompiler.lib")
 #include <Windows.h>
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
 #include <d3d11.h>
@@ -58,8 +59,20 @@ int main(int, char**)
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+    //add thai font here. NotoSansThai
+    ImFont* thaiFont = io.Fonts->AddFontFromFileTTF(
+        "fonts/NotoSansThai-Regular.ttf",      // location
+        18.0f,                          // font's size
+        NULL,                           
+        io.Fonts->GetGlyphRangesThai()
+    );
+
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+    //Initialize docking
+    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
