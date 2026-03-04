@@ -456,21 +456,35 @@ namespace cgui
 	}
 
 	//add new event
-	bool isNewEventOpen = false;
 	void NewEvent() {
-		if (isNewEventOpen) {
 
-			ImVec2 screenSize = ImGui::GetIO().DisplaySize;
-			ImVec2 targetSize(screenSize.x * 0.45f, screenSize.y * 0.45f);
-			ImGui::SetNextWindowSize(targetSize, ImGuiCond_Always);
+		ImVec2 screenSize = ImGui::GetIO().DisplaySize;
+		ImVec2 targetSize(screenSize.x * 0.45f, screenSize.y * 0.45f);
+		
+		ImGui::SetNextWindowSize(targetSize, ImGuiCond_Always);
+		ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
 
-			ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
-			ImGui::Begin("New Event", &isNewEventOpen, ImGuiWindowFlags_NoResize);
+		if (ImGui::BeginPopupModal("NewEvent", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar)) {
 
-			ImFont* Title = ImGui::GetIO().Fonts->Fonts[1];
+			ImFont* Title = ImGui::GetIO().Fonts->Fonts[2];
 			ImGui::PushFont(Title);
 			ImGui::Text("New Event");
 			ImGui::PopFont();
+
+			ImGui::SameLine();
+
+			ImVec2 closeButton(20.0f, 20.0f);
+
+			float WindowWidth = ImGui::GetWindowWidth();
+			float WindowHeight = ImGui::GetWindowHeight();
+
+			float targetX = WindowWidth - closeButton.x - 10.0f;
+
+			ImGui::SetCursorPosX(targetX);
+
+			if (ImGui::Button("X", closeButton)) {
+				ImGui::CloseCurrentPopup();
+			}
 
 			ImGui::SetNextItemWidth(-20.0f);
 			static char event_name[100] = "Event's name"; //event's name
@@ -638,11 +652,8 @@ namespace cgui
 			//save button
 			ImVec2 buttonSize(50, 35);
 
-			float WindowHeight = ImGui::GetWindowHeight();
-			float WindowWidth = ImGui::GetWindowWidth();
-
+			targetX = WindowWidth - buttonSize.x - 20.0f;
 			float targetY = WindowHeight - buttonSize.y - 20.0f;
-			float targetX = WindowWidth - buttonSize.x - 20.0f;
 
 			ImGui::SetCursorPos(ImVec2(targetX, targetY));
 
@@ -652,25 +663,63 @@ namespace cgui
 				// Clear the text box after saving (optional)
 			}
 
-			ImGui::End();
-			ImGui::PopStyleColor();
+			ImGui::EndPopup();
+		
 		}
+		
+		ImGui::PopStyleColor();
 	}
 
 	//search
 	void SearchEvent() {
-		ImGui::Begin("Search Event", NULL, ImGuiWindowFlags_NoCollapse);
 
-		ImGui::Text("Search Events");
+		ImVec2 screenSize = ImGui::GetIO().DisplaySize;
+		ImVec2 targetSize(screenSize.x * 0.45f, screenSize.y * 0.5f);
 
-		ImGui::End();
+		ImGui::SetNextWindowSize(targetSize, ImGuiCond_Appearing);
+		ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
+
+		if (ImGui::BeginPopupModal("SearchEvent", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar)) {
+
+			ImFont* Title = ImGui::GetIO().Fonts->Fonts[2];
+			ImGui::PushFont(Title);
+			ImGui::Text("Search Events");
+			ImGui::PopFont();
+
+			ImGui::SameLine();
+
+			ImVec2 closeButton(20.0f, 20.0f);
+			float WindowWidth = ImGui::GetWindowWidth();
+			float targetX = WindowWidth - closeButton.x - 10.0f;
+
+			ImGui::SetCursorPosX(targetX);
+
+			if (ImGui::Button("X", closeButton)){
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::SetNextItemWidth(0.8 * ImGui::GetWindowWidth());
+			static char searchText[512] = "";
+			ImGui::InputTextWithHint("##SearchInput", "Search here...", searchText, IM_ARRAYSIZE(searchText));
+
+			ImGui::SameLine();
+		
+			//ImGui::SetNextItemWidth(0.2 * ImGui::GetWindowWidth());
+			if (ImGui::Button("search")){
+
+			}
+
+			ImGui::EndPopup();
+		}
+
+		ImGui::PopStyleColor();
 	}
 
 	void UpcomingEvent()
 	{
 		ImGui::Begin("Upcoming Event", NULL, ImGuiWindowFlags_NoCollapse);
 		int n_events = 5;
-		ImFont* Title = ImGui::GetIO().Fonts->Fonts[1];
+		ImFont* Title = ImGui::GetIO().Fonts->Fonts[2];
 		ImGui::PushFont(Title);
 		ImGui::Text("Upcoming Events");
 		ImGui::PopFont();
@@ -698,15 +747,17 @@ namespace cgui
 		ImGui::SetCursorPos(ImVec2(targetX, targetY));
 
 		if (ImGui::Button("search", buttonSize)) {
-			//isSearchEventOpen = true;
+			ImGui::OpenPopup("SearchEvent");
 		}
 		ImGui::SameLine(0.0f, 15.0f);
 		ImGui::PushFont(Title);
 		if (ImGui::Button("+", buttonSize)) {
-			isNewEventOpen = true;
+			ImGui::OpenPopup("NewEvent");
 		}
 		ImGui::PopFont();
 
+		SearchEvent();
+		NewEvent();
 
 		ImGui::End();
 	}
