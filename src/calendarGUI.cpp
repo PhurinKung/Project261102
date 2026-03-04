@@ -106,8 +106,9 @@ namespace cgui
 
 							//save button
 							ImVec2 buttonSize(60, 35);
+							ImVec2 buttonSize_2(80, 35);
 
-							float targetX = WindowWidth - buttonSize.x - 20.0f;
+							float targetX = WindowWidth - buttonSize.x - buttonSize_2.x - 20.0f - 10.0f;
 							float targetY = WindowHeight - buttonSize.y - 20.0f;
 
 							ImGui::SetCursorPos(ImVec2(targetX, targetY));
@@ -115,6 +116,10 @@ namespace cgui
 							if (ImGui::Button("edit", buttonSize)) {
 								editing = true;
 								current_editing_event = ev;
+							}
+							ImGui::SameLine(0.0f, 20.0f);
+							if (ImGui::Button("delete", buttonSize_2)) {
+								
 							}
 							ImGui::EndTabItem();
 						}
@@ -726,12 +731,25 @@ namespace cgui
 			if (ImGui::Button("save", buttonSize)) {
 				// This is where you trigger your logic!
 
-				time_t st_timeinfo = Utils::DMYtoTime(atoi(Date[startdate]), startmonth, atoi(Year[startyear]), startHour, startMin);
-				time_t end_timeinfo = Utils::DMYtoTime(atoi(Date[enddate]), endMonth, atoi(Year[endYear]), endHour, endMin);
+				time_t st_timeinfo = Utils::DMYtoTime(atoi(Date[startdate]), startmonth+1, atoi(Year[startyear]), startHour, startMin);
+				time_t end_timeinfo = Utils::DMYtoTime(atoi(Date[enddate]), endMonth+1, atoi(Year[endYear]), endHour, endMin);
 
 				Event newEvent(event_name, st_timeinfo, end_timeinfo, items[selectedItem], detail, location);
 				myCalendar.addEvent(newEvent);
 				
+				//delete old info
+				event_name[0] = '\0';
+				location[0] = '\0';
+				detail[0] = '\0';
+
+				selectedItem = 0;
+
+				startdate = 0; startmonth = 0; startyear = 0;
+				startHour = 0; startMin = 0;
+
+				enddate = 0; endMonth = 0; endYear = 0;
+				endHour = 0; endMin = 0;
+
 				// Clear the text box after saving (optional)
 				ImGui::CloseCurrentPopup();
 			}
