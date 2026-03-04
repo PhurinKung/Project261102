@@ -14,6 +14,18 @@ std::tuple<int, int, int, int, int> timeToDMY(time_t tme) { // day month year ho
 	return std::make_tuple(day, month, year, hour, minute);
 }
 
+//std::tuple<int, int, int, int, int> timeToDMY(time_t tme) { // day month year hour minute
+//	tm* local_time = localtime(&tme);
+//
+//	int day = local_time->tm_mday;       // (1 - 31)
+//	int month = local_time->tm_mon + 1;  // (0 - 11) -> +1 = 1 - 12 
+//	int year = local_time->tm_year + 1900; // start from 1900 -> +1900 get current year
+//	int hour = local_time->tm_hour;
+//	int minute = local_time->tm_min;
+//
+//	return std::make_tuple(day, month, year, hour, minute);
+//}
+
 time_t DMYtoTime(int day, int month, int year, int hour , int minute ) {
 	tm time_info = { 0 };
 
@@ -32,11 +44,11 @@ time_t DMYtoTime(int day, int month, int year, int hour , int minute ) {
 // functions definitions
 
 CalendarManager::CalendarManager() { loadFromFile(); }
-CalendarManager::~CalendarManager() { saveToFile(); }
+CalendarManager::~CalendarManager() { saveToFile();  }
 
 void CalendarManager::loadFromFile() {
 	//load from data
-	std::ifstream src;
+	std::ifstream src(data_filename);
 	std::string line;
 
 	if (!src.is_open()) return;
@@ -66,6 +78,7 @@ void CalendarManager::loadFromFile() {
 		unsigned long long ID = stoull(data[6]);
 
 		Event LoadedEvent(title,StartTime,EndTime,category,detail,place,ID);
+		this->addEvent(LoadedEvent);
 
 		MAXID = std::max(ID,MAXID);
 	}
@@ -74,6 +87,9 @@ void CalendarManager::loadFromFile() {
 	
 	nextID = MAXID + 1;
 	this->sortEvents();
+	
+	//todo : load category files
+	
 	return ;
 }
 
