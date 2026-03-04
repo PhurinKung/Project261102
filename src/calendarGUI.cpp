@@ -3,16 +3,28 @@
 #include "imgui_internal.h"
 #include <ctime>
 #include <string>
+#include <vector>
+#include <string>
 
 namespace cgui
 {
+
+	static int ThisYear = 2026;
+	static int ThisMonth = 1;
+	static int selected_day = -1; // -1 means no day is selected yet
+
 	int FirstDayOfMonth(int, int);
 	int HowManyDaysInThisMonth(int, int);
 	void DrawCalendar();
 	void DrawCalendarV2();
 	void thisistest();
 	void UpcomingEvent();
+	void NewEvent();
+	void SearchEvent();
 	
+
+	void DrawCustomWindow();
+	void showevent();
 
 	void ThewholecalendarGUI() 
 	{
@@ -32,12 +44,12 @@ namespace cgui
 			ImGuiID dock_right_id, dock_left_bottom_id;
 
 			dock_right_id = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Right, 0.4f, NULL, &dock_main_id);
-			dock_left_bottom_id = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Down, 0.40f, NULL, &dock_main_id);
+			dock_left_bottom_id = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Down, 0.35f, NULL, &dock_main_id);
 
 
 			// --- ASSIGN WINDOWS ---
 			ImGui::DockBuilderDockWindow("Calendar", dock_main_id);
-			ImGui::DockBuilderDockWindow("test", dock_left_bottom_id);
+			ImGui::DockBuilderDockWindow("showevent", dock_left_bottom_id);
 			ImGui::DockBuilderDockWindow("Upcoming Event", dock_right_id);
 
 			ImGui::DockBuilderFinish(dockspace_id);
@@ -46,9 +58,11 @@ namespace cgui
 		ImGui::DockSpaceOverViewport(dockspace_id, ImGui::GetMainViewport());
 		//ImGui::DockSpaceOverViewport();
 		DrawCalendarV2();
-		thisistest();
+		showevent();
 		//DrawCustomWindow();
 		UpcomingEvent();
+		NewEvent();
+		SearchEvent();
 	}
 
 	void DrawCustomWindow() {
@@ -93,10 +107,62 @@ namespace cgui
 		ImGui::PopStyleColor(1); // Removes Window Background Color
 	}
 
+	void showevent() {
+		// 1. Create a window class to override the docking behavior
+		ImGuiWindowClass window_class;
+		window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
+		ImGui::SetNextWindowClass(&window_class);
 
-	void thisistest() {
-		ImGui::Begin("test", NULL);
-		ImGui::Text("u i a");
+		// 2. Begin your window (keep NoTitleBar so it stays clean if you ever undock it)
+		ImGui::Begin("showevent", nullptr, ImGuiWindowFlags_NoTitleBar);
+		std::vector<std::string>events = {"one day", "ow day"};
+		if (selected_day != -1)
+		{
+			// Print the date they clicked
+			//ImGui::Text("Events for: %02d/%02d/%d", selected_day, ThisMonth, ThisYear);
+			//ImGui::Separator();
+			if (!events.empty())
+			{
+				if (ImGui::BeginTabBar("EventTabs")) {
+					for (auto& tab : events) {
+						if (ImGui::BeginTabItem(tab.c_str())) {
+							ImGui::SetWindowFontScale(1.5f);
+							ImGui::Text("%s", tab.c_str());
+							ImGui::SetWindowFontScale(1.0f);
+							//ImGui::Dummy(ImVec2(0.0f, 0.5f));
+							ImGui::Text("%02d/%02d/%d", selected_day, ThisMonth, ThisYear);
+
+							ImGui::Text("Time : %d");
+							ImGui::Text("location : %s");
+							ImGui::SeparatorText("Details");
+
+							ImGui::EndTabItem();
+						}
+					}
+					ImGui::EndTabBar();
+				}
+
+			}
+			else {
+				ImGui::TextDisabled("Empty");
+			}
+		}
+		else
+		{
+			// What it shows when they first open the app and haven't clicked a day
+			ImGui::TextDisabled("Select a day on the calendar to view events.");
+		}
+		ImGui::End();
+	}
+	void thisistest(){
+
+		// 1. Create a window class to override the docking behavior
+		ImGuiWindowClass window_class;
+		window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
+		ImGui::SetNextWindowClass(&window_class);
+
+		// 2. Begin your window (keep NoTitleBar so it stays clean if you ever undock it)
+		ImGui::Begin("test", nullptr, ImGuiWindowFlags_NoTitleBar);
 
 		static char event_name[100] = "hehe";
 		ImGui::InputText("Event Name", event_name, sizeof(event_name));
@@ -112,7 +178,39 @@ namespace cgui
 		ImGui::Combo("###Select Fruit", &selectedItem, items, IM_ARRAYSIZE(items));
 		ImGui::Separator();
 		ImGui::Text("tada : %s", items[selectedItem]);
-		
+
+		//details
+		ImGui::SetNextItemWidth(-1.0f);
+		ImGui::InputText("###Name", event_name, sizeof(event_name));
+		// "MyTabBar" is an internal ID, it doesn't show up on screen
+		if (ImGui::BeginTabBar("MyTabBar")) {
+
+			// First Tab
+			// Passing a boolean pointer (&is_open) automatically adds the little 'X' close button
+			bool is_open = true;
+			if (ImGui::BeginTabItem("Lettuce", &is_open)) {
+				ImGui::Text("Document \"Lettuce\"");
+				ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Lorem ipsum dolor sit amet...");
+
+				// Always call EndTabItem if BeginTabItem returns true
+				ImGui::EndTabItem();
+			}
+
+			// Second Tab (No 'X' button because we don't pass a boolean)
+			if (ImGui::BeginTabItem("Eggplant")) {
+				ImGui::Text("Document \"Eggplant\"");
+				ImGui::EndTabItem();
+			}
+
+			// Third Tab
+			if (ImGui::BeginTabItem("Carrot")) {
+				ImGui::Text("Document \"Carrot\"");
+				ImGui::EndTabItem();
+			}
+
+			// Always call EndTabBar if BeginTabBar returns true
+			ImGui::EndTabBar();
+		}
 		ImGui::End();
 	}
 
@@ -121,8 +219,8 @@ namespace cgui
 		ImGui::Begin("Calendar", NULL, ImGuiWindowFlags_NoCollapse);
 		
 		if (ImGui::BeginTable("CalendarTable", 7)) {
-			int ThisYear = 2026; //recive from input kub
-			int ThisMonth = 1; //also this na
+			//int ThisYear = 2026; //recive from input kub
+			//int ThisMonth = 1; //also this na
 
 			//header of calendar
 			const char* days[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
@@ -240,7 +338,7 @@ namespace cgui
 			int DayOne = FirstDayOfMonth(ThisYear, ThisMonth); //position of the first day of the month
 			int AllDay = HowManyDaysInThisMonth(ThisYear, ThisMonth);
 
-			static int selected_day = -1;
+			//static int selected_day = -1;
 			int nday = 1;
 			for (int i = 0; i < 6; i++) {
 				ImGui::TableNextRow();
@@ -253,7 +351,7 @@ namespace cgui
 
 						ImGui::PushID(nday);
 						float cell_w = ImGui::GetContentRegionAvail().x;
-						float cell_h = 80.0f;
+						float cell_h = 100.0f;
 						ImVec2 cursor_pos = ImGui::GetCursorScreenPos(); // top right coordinate of the box
 						
 						//selectable boxes
@@ -266,21 +364,87 @@ namespace cgui
 						ImDrawList* draw_list = ImGui::GetWindowDrawList();
 						ImVec2 text_size = ImGui::CalcTextSize(day_str.c_str());
 						float offset_x = (cell_w - text_size.x) * 0.5f;
-						float offset_y = (cell_h - text_size.y) * 0.5f;
+						float offset_y = 8.0f;
 						ImVec2 text_pos = ImVec2(cursor_pos.x + offset_x, cursor_pos.y + offset_y);
 
 						draw_list->AddText(text_pos, ImGui::GetColorU32(ImGuiCol_Text), day_str.c_str());
 						
-						// 5. วาดจุด Event (ตัวอย่าง: ให้มีจุดแดงในวันที่ 5, 10, 15...)
+						// fill event dots if there are any
+						int num_events = 3; // Example: test with more than 8
+
+						if (num_events > 0)
+						{
+							float dot_radius = 3.0f;
+							float dot_spacing = 4.0f;
+							float row_spacing = 4.0f; // Vertical space between rows of dots
+							int max_per_row = 8;
+
+							// Calculate how many rows are needed
+							int num_rows = (num_events + max_per_row - 1) / max_per_row;
+							float dot_size = dot_radius * 2.0f;
+
+							// Center the entire block of dots vertically in the cell
+							float total_height = (num_rows * dot_size) + ((num_rows - 1) * row_spacing);
+							float start_y = cursor_pos.y + (cell_h - total_height) * 0.5f + dot_radius;
+
+							ImU32 category_colors[] = {
+								IM_COL32(255, 50, 50, 150),
+								IM_COL32(50, 255, 50, 150),
+								IM_COL32(50, 150, 255, 150),
+								IM_COL32(255, 200, 50, 150)
+							};
+
+							for (int row = 0; row < num_rows; ++row)
+							{
+								// Calculate how many dots are in this specific row
+								int dots_in_this_row = (row == num_rows - 1) ? (num_events - row * max_per_row) : max_per_row;
+
+								// Center this specific row horizontally
+								float row_width = (dots_in_this_row * dot_size) + ((dots_in_this_row - 1) * dot_spacing);
+								float current_x = cursor_pos.x + (cell_w - row_width) * 0.5f + dot_radius;
+								float current_y = start_y + row * (dot_size + row_spacing);
+
+								for (int col = 0; col < dots_in_this_row; ++col)
+								{
+									int event_index = row * max_per_row + col;
+									ImU32 dot_color = category_colors[event_index % 4];
+
+									draw_list->AddCircleFilled(ImVec2(current_x, current_y), dot_radius, dot_color);
+
+									current_x += dot_size + dot_spacing;
+								}
+							}
+						}
 						/*
-						bool has_event = (nday % 5 == 0); // ตรงนี้คุณเปลี่ยนไปเช็คจากข้อมูล Calendar ของคุณได้
-						if (has_event) {
-							ImVec2 dot_pos = ImVec2(cursor_pos.x + (cell_w * 0.5f), cursor_pos.y + cell_h - 8.0f);
-							draw_list->AddCircleFilled(dot_pos, 3.0f, IM_COL32(255, 100, 100, 255));
+						if (nday) // is there any event on this day?
+						{
+							float event_y = cursor_pos.y + offset_y + text_size.y + 6.0f;
+							for (int i = 0; i < 4; i++) {
+								const char* event_text = " Event Namesgfdgsdsgs";
+								ImVec2 event_size = ImGui::CalcTextSize(event_text);
+
+								float padding_x = 5.0f; // Margin on the left and right
+								float event_x = cursor_pos.x + padding_x;
+								float max_x = cursor_pos.x + cell_w - padding_x;
+								float max_y = cursor_pos.y + cell_h;
+								ImVec2 event_pos = ImVec2(event_x, event_y);
+
+								ImU32 highlight_color = IM_COL32(0, 0, 200, 150);
+								draw_list->AddRectFilled(
+									event_pos,
+									ImVec2(max_x, event_pos.y + event_size.y),
+									highlight_color,
+									2.0f //rounding
+								);
+
+								ImGui::PushClipRect(event_pos, ImVec2(max_x,max_y), true); //ตัดอักษรที่เกินhighlight ออกนะ
+								draw_list->AddText(event_pos, IM_COL32(255, 255, 255, 255), event_text);
+								ImGui::PopClipRect();
+								event_y = event_y + event_size.y + 6.0f;
+								if (event_y + event_size.y + 4.0f > max_y) break;
+							}
 						}
 						*/
-						
-
 						ImGui::PopID(); // คืนค่า ID
 						nday++;
 					}
@@ -291,13 +455,259 @@ namespace cgui
 		ImGui::End();
 	}
 
+	//add new event
+	bool isNewEventOpen = false;
+	void NewEvent() {
+		if (isNewEventOpen) {
+
+			ImVec2 screenSize = ImGui::GetIO().DisplaySize;
+			ImVec2 targetSize(screenSize.x * 0.45f, screenSize.y * 0.45f);
+			ImGui::SetNextWindowSize(targetSize, ImGuiCond_Always);
+
+			ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
+			ImGui::Begin("New Event", &isNewEventOpen, ImGuiWindowFlags_NoResize);
+
+			ImFont* Title = ImGui::GetIO().Fonts->Fonts[1];
+			ImGui::PushFont(Title);
+			ImGui::Text("New Event");
+			ImGui::PopFont();
+
+			ImGui::SetNextItemWidth(-20.0f);
+			static char event_name[100] = "Event's name"; //event's name
+			ImGui::InputText("##Event_Name", event_name, sizeof(event_name));
+			// วางคำสั่งนี้ลอยๆ ได้เลย ข้อความจะถูกเซฟลง event_name ตลอดเวลาที่พิมพ์
+
+			ImGui::SetNextItemWidth(-20.0f);
+			static char location[250] = "Location"; //the location
+			ImGui::InputText("##Location", location, sizeof(location));
+
+			//categories
+			ImGui::SetNextItemWidth(150.0f);
+			static int selectedItem = 0;
+			const char* items[] = { "Work", "Personal", "Business", "Others" };
+			ImGui::Combo("##Select categories", &selectedItem, items, IM_ARRAYSIZE(items));
+
+			/*-------------------------select date and time-----------------------------*/
+			//start
+			ImGui::Text("STARTS");
+			ImGui::SameLine();
+
+			static int startdate = 0;
+			const char* Date[] = {
+				"1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
+				"11", "12", "13", "14", "15", "16", "17", "18", "19", "20",
+				"21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31"
+			};
+			ImGui::SetNextItemWidth(60.0f);
+			ImGui::Combo("##Select startdate", &startdate, Date, IM_ARRAYSIZE(Date));
+			ImGui::SameLine();
+
+			static int startmonth = 0;
+			const char* Month[] = {
+				"JAN", "FEB", "MAR", "APR", "MAY", "JUN","JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
+			};
+			ImGui::SetNextItemWidth(75.0f);
+			ImGui::Combo("##Select Month", &startmonth, Month, IM_ARRAYSIZE(Month));
+			ImGui::SameLine();
+
+			static int startyear = 0;
+			const char* Year[] = {
+				"2026", "2027", "2028", "2029", "2030", "2031","2032", "2033", "2034", "2035", "2036"
+			};
+			ImGui::SetNextItemWidth(75.0f);
+			ImGui::Combo("##Select Year", &startyear, Year, IM_ARRAYSIZE(Year));
+			ImGui::SameLine(0.0f, 30.0f);
+
+			//start time
+			ImGui::Text("Time :");
+			ImGui::SameLine();
+
+			static int startHour = 0;
+			char hourPreview[8];
+			snprintf(hourPreview, sizeof(hourPreview), "%02d", startHour);
+
+			ImGui::SetNextItemWidth(60.0f);
+			if (ImGui::BeginCombo("##StartHour", hourPreview)) {
+				for (int h = 0; h < 24; h++) {
+					char buf[8];
+					snprintf(buf, sizeof(buf), "%02d", h);
+
+					bool isSelected = (startHour == h);
+					if (ImGui::Selectable(buf, isSelected)) {
+						startHour = h;
+					}
+					if (isSelected) ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			ImGui::SameLine();
+			ImGui::Text(" : ");
+			ImGui::SameLine();
+
+			static int startMin = 0;
+			char minPreview[8];
+			snprintf(minPreview, sizeof(minPreview), "%02d", startMin);
+
+			ImGui::SetNextItemWidth(60.0f);
+			if (ImGui::BeginCombo("##StartMin", minPreview)) {
+				for (int m = 0; m <= 60; m++) {
+					char buf[8];
+					snprintf(buf, sizeof(buf), "%02d", m);
+
+					bool isSelected = (startMin == m);
+					if (ImGui::Selectable(buf, isSelected)) {
+						startMin = m;
+					}
+					if (isSelected) ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+
+			//End
+			ImGui::Text("ENDS");
+			ImGui::SameLine(0.0f, 25.0f);
+
+			ImGui::SetNextItemWidth(60.0f);
+			static int enddate = 0;
+			ImGui::Combo("##Select enddate", &enddate, Date, IM_ARRAYSIZE(Date));
+			ImGui::SameLine();
+
+			ImGui::SetNextItemWidth(75.0f);
+			static int endMonth = 0;
+			ImGui::Combo("##Select endMonth", &endMonth, Month, IM_ARRAYSIZE(Month));
+			ImGui::SameLine();
+
+			ImGui::SetNextItemWidth(75.0f);
+			static int endYear = 0;
+			ImGui::Combo("##Select endYear", &endYear, Year, IM_ARRAYSIZE(Year));
+			ImGui::SameLine(0.0f, 30.0f);
+
+			//end time
+			ImGui::Text("Time :");
+			ImGui::SameLine();
+
+			static int endHour = 0;
+			char hourEndPreview[8];
+			snprintf(hourEndPreview, sizeof(hourEndPreview), "%02d", endHour);
+
+			ImGui::SetNextItemWidth(60.0f);
+			if (ImGui::BeginCombo("##EndHour", hourEndPreview)) {
+				for (int h = 0; h < 24; h++) {
+					char buf[8];
+					snprintf(buf, sizeof(buf), "%02d", h);
+
+					bool isSelected = (endHour == h);
+					if (ImGui::Selectable(buf, isSelected)) {
+						endHour = h;
+					}
+					if (isSelected) ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			ImGui::SameLine();
+			ImGui::Text(" : ");
+			ImGui::SameLine();
+
+			static int endMin = 0;
+			char minEndPreview[8];
+			snprintf(minEndPreview, sizeof(minEndPreview), "%02d", endMin);
+
+			ImGui::SetNextItemWidth(60.0f);
+			if (ImGui::BeginCombo("##EndMin", minEndPreview)) {
+				for (int m = 0; m <= 60; m++) {
+					char buf[8];
+					snprintf(buf, sizeof(buf), "%02d", m);
+
+					bool isSelected = (endMin == m);
+					if (ImGui::Selectable(buf, isSelected)) {
+						endMin = m;
+					}
+					if (isSelected) ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			
+			/*------------------------------------------------------------------*/
+
+			/*------------------------details---------------------------*/
+			static char detail[1024] = "";
+			ImVec2 boxSize(-20.0f, 150.0f);
+			ImGui::InputTextMultiline("##Detail", detail, sizeof(detail), boxSize, ImGuiInputTextFlags_WordWrap);
+			/*----------------------------------------------------------*/
+
+			//save button
+			ImVec2 buttonSize(50, 35);
+
+			float WindowHeight = ImGui::GetWindowHeight();
+			float WindowWidth = ImGui::GetWindowWidth();
+
+			float targetY = WindowHeight - buttonSize.y - 20.0f;
+			float targetX = WindowWidth - buttonSize.x - 20.0f;
+
+			ImGui::SetCursorPos(ImVec2(targetX, targetY));
+
+			if (ImGui::Button("save", buttonSize)) {
+				// This is where you trigger your logic!
+
+				// Clear the text box after saving (optional)
+			}
+
+			ImGui::End();
+			ImGui::PopStyleColor();
+		}
+	}
+
+	//search
+	void SearchEvent() {
+		ImGui::Begin("Search Event", NULL, ImGuiWindowFlags_NoCollapse);
+
+		ImGui::Text("Search Events");
+
+		ImGui::End();
+	}
+
 	void UpcomingEvent()
 	{
 		ImGui::Begin("Upcoming Event", NULL, ImGuiWindowFlags_NoCollapse);
 		int n_events = 5;
+		ImFont* Title = ImGui::GetIO().Fonts->Fonts[1];
+		ImGui::PushFont(Title);
+		ImGui::Text("Upcoming Events");
+		ImGui::PopFont();
 		for (int i = 0; i < n_events; i++) {
-			ImGui::BulletText("  waha ur date");
+			ImGui::PushID(i);
+			const char* event_name = "jdkas";
+			if (ImGui::CollapsingHeader(event_name)) {
+				ImGui::Text("%02d/%02d/%d", selected_day, ThisMonth, ThisYear);
+				ImGui::SeparatorText("Time");
+				ImGui::Text("10:00AM");
+				ImGui::SeparatorText("Location");
+				ImGui::SeparatorText("Details");
+			}
+			ImGui::PopID();
 		}
+
+		ImVec2 buttonSize(60, 60);
+
+		float WindowHeight = ImGui::GetWindowHeight();
+		float WindowWidth = ImGui::GetWindowWidth();
+
+		float targetY = WindowHeight - buttonSize.y - 30.0f; // 45 = 30 + 15 ---ระยะห่างขอบ + ระยะห่างของแต่ละปุ่ม
+		float targetX = WindowWidth - (2 * buttonSize.x) - 45.0f; // *2 since we have 2 buttons
+
+		ImGui::SetCursorPos(ImVec2(targetX, targetY));
+
+		if (ImGui::Button("search", buttonSize)) {
+			//isSearchEventOpen = true;
+		}
+		ImGui::SameLine(0.0f, 15.0f);
+		ImGui::PushFont(Title);
+		if (ImGui::Button("+", buttonSize)) {
+			isNewEventOpen = true;
+		}
+		ImGui::PopFont();
+
+
 		ImGui::End();
 	}
 
