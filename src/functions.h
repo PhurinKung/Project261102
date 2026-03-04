@@ -152,7 +152,7 @@ void CalendarManager::sortEvents() {
 
 
 bool CalendarManager::addEvent(Event newEvent) {
-    if (newEvent.getStartTime() >= newEvent.getEndTime()) {
+	if (newEvent.getStartTime() > newEvent.getEndTime()) {
         return false; //ตรวจสอบเวลา
     }
     newEvent.setID(nextID++); //run id
