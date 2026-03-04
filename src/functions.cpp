@@ -280,6 +280,15 @@ std::vector<Event> CalendarManager::getUpcomingEvents(int N) {
 	std::vector<Event> upcoming;
 
 	//todo : check every event and compare with time_t 
+	time_t now = time(nullptr);
+
+	for (const auto& i : allEvents) {
+		if (i.getStartTime() <= now && i.getEndTime() >= now)
+			upcoming.push_back(i);
+
+		if (upcoming.size() > N) break;
+	}
+
 
 	return upcoming;
 }
