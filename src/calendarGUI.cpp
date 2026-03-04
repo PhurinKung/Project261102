@@ -663,7 +663,8 @@ namespace cgui
 				// This is where you trigger your logic!
 
 				//Event newEvent(event_name, , , items, detail, location, );
-
+				//เกิดอะไรไม่รู้น่ะ merge ไม่ได้ น่าจะมีปัญหาซักอย่าง
+				
 
 				// Clear the text box after saving (optional)
 			}
