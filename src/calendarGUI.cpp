@@ -7,8 +7,8 @@
 namespace cgui
 {
 
-	static int ThisYear = 2026;
-	static int ThisMonth = 1;
+	static int selected_year = -1;
+	static int selected_month = -1;
 	static int selected_day = -1; // -1 means no day is selected yet
 	static bool createnewcategory = false;
 	static CalendarManager myCalendar;
@@ -72,7 +72,7 @@ namespace cgui
 		if (selected_day != -1)
 		{
 			// Print the date they clicked
-			std::vector<Event> events_today = myCalendar.getEventsByDate(selected_day, ThisMonth, ThisYear);
+			std::vector<Event> events_today = myCalendar.getEventsByDate(selected_day, selected_month, selected_year);
 			if (!events_today.empty())
 			{
 				if (ImGui::BeginTabBar("EventTabs")) {
@@ -80,21 +80,38 @@ namespace cgui
 						if (ImGui::BeginTabItem(ev.getTitle().c_str())) {
 							ImGui::SetWindowFontScale(1.75f);
 							ImGui::Text("%s", ev.getTitle().c_str());
+							ImGui::Separator();
 							ImGui::SetWindowFontScale(1.25f);
 
-							ImGui::Text("%02d/%02d/%d", selected_day, ThisMonth, ThisYear);
+							//ImGui::Text("%02d/%02d/%d", selected_day, selected_month, selected_year);
 							auto [s_day, s_mon, s_year, s_hour, s_min] = Utils::timeToDMY(ev.getStartTime());
 							auto [e_day, e_mon, e_year, e_hour, e_min] = Utils::timeToDMY(ev.getEndTime());
 
 							// 5. Print the exact details
-							ImGui::Text("Start Time : %02d:%02d", s_hour, s_min);
-							ImGui::Text("End Time   : %02d:%02d", e_hour, e_min);
+							ImGui::Text("Start Time : %02d/%02d/%d,  %02d:%02d", s_day, s_mon, s_year, s_hour, s_min);
+							ImGui::Text("End Time   : %02d/%02d/%d,  %02d:%02d", e_day, e_mon, e_year, e_hour, e_min);
 							ImGui::Text("Category   : %s", ev.getCategory().c_str());
 							ImGui::Text("Location   : %s", ev.getPlaces().c_str());
 
 							ImGui::SeparatorText("Details");
 							ImGui::TextWrapped("%s", ev.getDetails().c_str());
 
+							float WindowWidth = ImGui::GetWindowWidth();
+							float WindowHeight = ImGui::GetWindowHeight();
+
+							//save button
+							ImVec2 buttonSize(60, 35);
+
+							float targetX = WindowWidth - buttonSize.x - 20.0f;
+							float targetY = WindowHeight - buttonSize.y - 20.0f;
+
+							ImGui::SetCursorPos(ImVec2(targetX, targetY));
+
+							if (ImGui::Button("save", buttonSize)) {
+								// This is where you trigger your logic!
+
+								// Clear the text box after saving (optional)
+							}
 							ImGui::EndTabItem();
 						}
 					}
@@ -257,7 +274,6 @@ namespace cgui
 			int DayOne = FirstDayOfMonth(ThisYear, ThisMonth); //position of the first day of the month
 			int AllDay = HowManyDaysInThisMonth(ThisYear, ThisMonth);
 
-			//static int selected_day = -1;
 			int nday = 1;
 			for (int i = 0; i < 6; i++) {
 				ImGui::TableNextRow();
@@ -277,6 +293,8 @@ namespace cgui
 						bool is_selected = (selected_day == nday);
 						if (ImGui::Selectable("##day", is_selected, 0, ImVec2(cell_w, cell_h))) {
 							selected_day = nday;
+							selected_month = ThisMonth;
+							selected_year = ThisYear;
 						}
 
 						//fill numbers
@@ -751,7 +769,7 @@ namespace cgui
 			for (int i = 0; i < upcoming_events.size(); i++) {
 				const Event& ev = upcoming_events[i];
 				ImGui::PushID(ev.getID());
-				const char* event_name = "jdkas";
+				const char* event_name = ev.getTitle().c_str();
 				if (ImGui::CollapsingHeader(ev.getTitle().c_str())) {
 
 					auto [s_day, s_month, s_year, s_hour, s_min] = Utils::timeToDMY(ev.getStartTime());
