@@ -177,7 +177,7 @@ namespace cgui
 
 			// --- TITLE ---
 			ImGui::SetWindowFontScale(1.25f);
-			ImGui::PushItemWidth(380.0f);
+			ImGui::PushItemWidth(-1.0f);
 			ImGui::InputText("##EditTitle", edit_title, sizeof(edit_title));
 			ImGui::PopItemWidth();
 			ImGui::Separator();
@@ -234,7 +234,7 @@ namespace cgui
 
 			// --- DETAILS ---
 			ImGui::SeparatorText("Details");
-			ImGui::InputTextMultiline("##EditDet", edit_details, sizeof(edit_details), ImVec2(380.0f, 120.0f), ImGuiInputTextFlags_WordWrap);
+			ImGui::InputTextMultiline("##EditDet", edit_details, sizeof(edit_details), ImVec2(-1.0f, 140.0f), ImGuiInputTextFlags_WordWrap);
 
 			ImGui::Dummy(ImVec2(0.0f, 10.0f));
 
