@@ -543,13 +543,13 @@ namespace cgui
 			}
 
 			ImGui::SetNextItemWidth(-20.0f);
-			static char event_name[100] = "Event's name"; //event's name
-			ImGui::InputText("##Event_Name", event_name, sizeof(event_name));
+			static char event_name[100] = ""; //event's name
+			ImGui::InputTextWithHint("##Event's name", "Event's Name", event_name, IM_ARRAYSIZE(event_name));
 			// วางคำสั่งนี้ลอยๆ ได้เลย ข้อความจะถูกเซฟลง event_name ตลอดเวลาที่พิมพ์
 
 			ImGui::SetNextItemWidth(-20.0f);
-			static char location[250] = "Location"; //the location
-			ImGui::InputText("##Location", location, sizeof(location));
+			static char location[250] = ""; //the location
+			ImGui::InputTextWithHint("##Location", "Location", location, IM_ARRAYSIZE(location));
 
 			//categories
 			ImGui::SetNextItemWidth(150.0f);
@@ -582,6 +582,12 @@ namespace cgui
 			};
 			ImGui::SetNextItemWidth(75.0f);
 			ImGui::Combo("##Select Month", &startmonth, Month, IM_ARRAYSIZE(Month));
+			
+			//std::map<int, std::string> MON = {
+			//	{0, "JAN"},{1, "FEB"},{2, "MAR"},{3, "APR"},{4, "MAY"},{5, "JUN"},
+			//	{6, "JUL"},{7, "AUG"},{8, "SEP"},{9, "OCT"},{10, "NOV"},{11, "DEC"}
+			//};
+
 			ImGui::SameLine();
 
 			static int startyear = 0;
@@ -720,11 +726,14 @@ namespace cgui
 			if (ImGui::Button("save", buttonSize)) {
 				// This is where you trigger your logic!
 
-				//Event newEvent(event_name, , , items, detail, location, );
-				//เกิดอะไรไม่รู้น่ะ merge ไม่ได้ น่าจะมีปัญหาซักอย่าง
-				
+				time_t st_timeinfo = Utils::DMYtoTime(atoi(Date[startdate]), startmonth, atoi(Year[startyear]), startHour, startMin);
+				time_t end_timeinfo = Utils::DMYtoTime(atoi(Date[enddate]), endMonth, atoi(Year[endYear]), endHour, endMin);
 
+				Event newEvent(event_name, st_timeinfo, end_timeinfo, items[selectedItem], detail, location);
+				myCalendar.addEvent(newEvent);
+				
 				// Clear the text box after saving (optional)
+				ImGui::CloseCurrentPopup();
 			}
 
 			ImGui::EndPopup();

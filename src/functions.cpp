@@ -287,17 +287,17 @@ std::vector<Event> CalendarManager::getUpcomingEvents(int N) {
 	time_t now = time(nullptr);
 
 	for (const auto& i : allEvents) {
-<<<<<<< HEAD
+
 		if (i.getStartTime() <= now && i.getEndTime() >= now)
 			upcoming.push_back(i);
 
 		if (upcoming.size() > N) break;
-=======
+
 		if (i.getEndTime() >= now)
 			upcoming.push_back(i);
 
 		if (upcoming.size() == N) break;
->>>>>>> b6941d27d621a25af04d9d1411647d0df163edf4
+
 	}
 
 
