@@ -115,9 +115,9 @@ public:
     void loadFromFile();
 
     //core logic
-    bool addEvent(Event newEvent); // return true if add sucess
-    bool deleteEvent(unsigned long long eventId); // return true if delete sucsees
-    bool editEvent(unsigned long long eventId, Event updatedEvent); // return true if edit sucsess
+	pair<bool, string> addEvent(Event newEvent); // return status and error message
+	pair<bool, string> deleteEvent(unsigned long long eventId); // return status and error message
+	pair<bool, string> editEvent(unsigned long long eventId, Event updatedEvent); // return status and error message
 
     // Find & Search
     const vector<Event>& getAllEvents() const; // ใช้ const& ไม่ให้ copy ข้อมูล เปลืองแรม
@@ -151,20 +151,17 @@ void CalendarManager::sortEvents() {
 }
 
 
-bool CalendarManager::addEvent(Event newEvent) {
+pair<bool, string> CalendarManager::addEvent(Event newEvent) {
 	if (newEvent.getStartTime() > newEvent.getEndTime()) {
-        return false; //ตรวจสอบเวลา
+		return { false, "Start time must less than or equal to End time" };
     }
     newEvent.setID(nextID++); //run id
     allEvents.push_back(newEvent);
     this->sortEvents();//added event then sort
-    return true;
-
-    
-    //return true if sucsess
+	return { true, "Success" };
 }
 
-bool CalendarManager::deleteEvent(unsigned long long eventId) {
+pair<bool, string> CalendarManager::deleteEvent(unsigned long long eventId) {
 	auto it = find_if(allEvents.begin(), allEvents.end(),
 		[eventId](const Event& e) {
 			return e.getID() == eventId;
@@ -172,18 +169,21 @@ bool CalendarManager::deleteEvent(unsigned long long eventId) {
     
     if (it != allEvents.end()) {
         allEvents.erase(it); //ลบ event
-        return true;
+		return { true, "Success" };
     }
-    return false;
+
+	string ErrorMSG = "Can not find this [" + to_string(eventId) + "] id";
+
+	return { false, ErrorMSG };
 }
 
-bool CalendarManager::editEvent(unsigned long long eventId, Event updatedEvent) {
+pair<bool, string> CalendarManager::editEvent(unsigned long long eventId, Event updatedEvent) {
     //todo : look for this eventId and update
     //if the date is change then sort (or just sort every time)
     //return true if sucsess
     
-	if (updatedEvent.getStartTime() >= updatedEvent.getEndTime())
-            return false;
+	if (updatedEvent.getStartTime() > updatedEvent.getEndTime())
+		return { false , "Start time must less than or equal to End time" };
 
 	for (auto& e : allEvents) {
 		if (e.getID() == eventId) {
@@ -192,11 +192,11 @@ bool CalendarManager::editEvent(unsigned long long eventId, Event updatedEvent) 
             e = updatedEvent;
 
             sortEvents();
-            return true;
+			return { true, "Success" };
         }
     }
-    return false;
-
+	string ErrorMSG = "Can not find this [" + to_string(eventId) + "] id";
+	return { false, ErrorMSG };
 }
 
 const vector<Event>& CalendarManager::getAllEvents() const {
