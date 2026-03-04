@@ -3,29 +3,29 @@
 #include "imgui_internal.h"
 #include "functions.h"
 #include <ctime>
-#include <string>
-#include <vector>
-#include <string>
+#include "functions.h"
 
 namespace cgui
 {
 
-	static int ThisYear = 2026;
-	static int ThisMonth = 1;
+	static int selected_year = -1;
+	static int selected_month = -1;
 	static int selected_day = -1; // -1 means no day is selected yet
+	static bool editing = false;
+	static bool createnewcategory = false;
+	static CalendarManager myCalendar;
+	static Event current_editing_event;
 
 	int FirstDayOfMonth(int, int);
 	int HowManyDaysInThisMonth(int, int);
-	void DrawCalendar();
 	void DrawCalendarV2();
 	void thisistest();
 	void UpcomingEvent();
 	void NewEvent();
 	void SearchEvent();
-	
-
-	void DrawCustomWindow();
+	void CreateNewCategory();
 	void showevent();
+	void EditEvent();
 
 	void ThewholecalendarGUI() 
 	{
@@ -57,57 +57,14 @@ namespace cgui
 		}
 
 		ImGui::DockSpaceOverViewport(dockspace_id, ImGui::GetMainViewport());
-		//ImGui::DockSpaceOverViewport();
 		DrawCalendarV2();
 		showevent();
-		//DrawCustomWindow();
 		UpcomingEvent();
 		NewEvent();
 		SearchEvent();
+		CreateNewCategory();
+		EditEvent();
 	}
-
-	void DrawCustomWindow() {
-		//i just wanna see how to layout and style in imgui so this is just example window codes
-		// --- WINDOW CUSTOMIZATION ---
-		// 1. Change the background color of the window (R, G, B, Alpha)
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.12f, 0.11f, 0.16f, 1.00f));
-		// 2. Make the window corners rounded
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
-
-		// Create the window
-		ImGui::Begin("Custom Window Name");
-
-		// --- FONT CUSTOMIZATION ---
-
-		ImGui::Text("Here is my custom text!");
-		ImGui::Dummy(ImVec2(0.0f, 10.0f)); // Adds vertical spacing
-
-		// --- BUTTON CUSTOMIZATION ---
-		// 4. Set the three states of button colors
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.35f, 0.31f, 0.47f, 1.0f));        // Normal
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.45f, 0.41f, 0.57f, 1.0f)); // Hovering
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.25f, 0.21f, 0.37f, 1.0f));  // Clicked
-
-		// 5. Round the button corners
-		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 5.0f);
-
-		// Create the button (Width, Height)
-		if (ImGui::Button("Click Me", ImVec2(120, 40))) {
-			// Code to run when clicked goes here
-		}
-
-		// --- CLEANUP (CRITICAL) ---
-		// 6. You must Pop exactly the number of times you Pushed inside this section!
-		ImGui::PopStyleVar(1);   // Removes Button Rounding
-		ImGui::PopStyleColor(3); // Removes the 3 Button Colors
-
-		ImGui::End(); // Ends the Window
-
-		// Clean up the Window customizations pushed before ImGui::Begin
-		ImGui::PopStyleVar(1);   // Removes Window Rounding
-		ImGui::PopStyleColor(1); // Removes Window Background Color
-	}
-
 	void showevent() {
 		// 1. Create a window class to override the docking behavior
 		ImGuiWindowClass window_class;
@@ -116,27 +73,49 @@ namespace cgui
 
 		// 2. Begin your window (keep NoTitleBar so it stays clean if you ever undock it)
 		ImGui::Begin("showevent", nullptr, ImGuiWindowFlags_NoTitleBar);
-		std::vector<std::string>events = {"one day", "ow day"};
+		ImGui::SetWindowFontScale(1.25f);
 		if (selected_day != -1)
 		{
 			// Print the date they clicked
-			//ImGui::Text("Events for: %02d/%02d/%d", selected_day, ThisMonth, ThisYear);
-			//ImGui::Separator();
-			if (!events.empty())
+			std::vector<Event> events_today = myCalendar.getEventsByDate(selected_day, selected_month, selected_year);
+			if (!events_today.empty())
 			{
 				if (ImGui::BeginTabBar("EventTabs")) {
-					for (auto& tab : events) {
-						if (ImGui::BeginTabItem(tab.c_str())) {
-							ImGui::SetWindowFontScale(1.5f);
-							ImGui::Text("%s", tab.c_str());
-							ImGui::SetWindowFontScale(1.0f);
-							//ImGui::Dummy(ImVec2(0.0f, 0.5f));
-							ImGui::Text("%02d/%02d/%d", selected_day, ThisMonth, ThisYear);
+					for (auto& ev : events_today) {
+						if (ImGui::BeginTabItem(ev.getTitle().c_str())) {
+							ImGui::SetWindowFontScale(1.75f);
+							ImGui::Text("%s", ev.getTitle().c_str());
+							ImGui::Separator();
+							ImGui::SetWindowFontScale(1.25f);
 
-							ImGui::Text("Time : %d");
-							ImGui::Text("location : %s");
+							//ImGui::Text("%02d/%02d/%d", selected_day, selected_month, selected_year);
+							auto [s_day, s_mon, s_year, s_hour, s_min] = Utils::timeToDMY(ev.getStartTime());
+							auto [e_day, e_mon, e_year, e_hour, e_min] = Utils::timeToDMY(ev.getEndTime());
+
+							// 5. Print the exact details
+							ImGui::Text("Start Time : %02d/%02d/%d,  %02d:%02d", s_day, s_mon, s_year, s_hour, s_min);
+							ImGui::Text("End Time   : %02d/%02d/%d,  %02d:%02d", e_day, e_mon, e_year, e_hour, e_min);
+							ImGui::Text("Category   : %s", ev.getCategory().c_str());
+							ImGui::Text("Location   : %s", ev.getPlaces().c_str());
+
 							ImGui::SeparatorText("Details");
+							ImGui::TextWrapped("%s", ev.getDetails().c_str());
 
+							float WindowWidth = ImGui::GetWindowWidth();
+							float WindowHeight = ImGui::GetWindowHeight();
+
+							//save button
+							ImVec2 buttonSize(60, 35);
+
+							float targetX = WindowWidth - buttonSize.x - 20.0f;
+							float targetY = WindowHeight - buttonSize.y - 20.0f;
+
+							ImGui::SetCursorPos(ImVec2(targetX, targetY));
+
+							if (ImGui::Button("edit", buttonSize)) {
+								editing = true;
+								current_editing_event = ev;
+							}
 							ImGui::EndTabItem();
 						}
 					}
@@ -145,7 +124,7 @@ namespace cgui
 
 			}
 			else {
-				ImGui::TextDisabled("Empty");
+				ImGui::TextDisabled("No event for this day.");
 			}
 		}
 		else
@@ -155,6 +134,140 @@ namespace cgui
 		}
 		ImGui::End();
 	}
+
+	void EditEvent() {
+		// 1. Static variables to hold the editing state
+		static char edit_title[100] = "";
+		static char edit_location[250] = "";
+		static char edit_details[1024] = "";
+		static int s_day, s_mon, s_year, s_hour, s_min;
+		static int e_day, e_mon, e_year, e_hour, e_min;
+		static int selected_cat_idx = 0;
+
+		// 2. TRIGGER BLOCK: This runs EXACTLY ONCE when you click "edit"
+		if (editing) {
+			// Copy the strings
+			snprintf(edit_title, sizeof(edit_title), "%s", current_editing_event.getTitle().c_str());
+			snprintf(edit_location, sizeof(edit_location), "%s", current_editing_event.getPlaces().c_str());
+			snprintf(edit_details, sizeof(edit_details), "%s", current_editing_event.getDetails().c_str());
+
+			// --- INJECT THE OLD START TIME ---
+			auto [sd, sm, sy, sh, smin] = Utils::timeToDMY(current_editing_event.getStartTime());
+			s_day = sd; s_mon = sm; s_year = sy; s_hour = sh; s_min = smin;
+
+			// --- INJECT THE OLD END TIME ---
+			auto [ed, em, ey, eh, emin] = Utils::timeToDMY(current_editing_event.getEndTime());
+			e_day = ed; e_mon = em; e_year = ey; e_hour = eh; e_min = emin;
+
+			// Match the old category to the dropdown
+			std::vector<std::string> cats = myCalendar.getCategories();
+			selected_cat_idx = 0;
+			for (int i = 0; i < cats.size(); i++) {
+				if (cats[i] == current_editing_event.getCategory()) {
+					selected_cat_idx = i;
+					break;
+				}
+			}
+
+			ImGui::OpenPopup("Edit Window");
+			editing = false;
+		}
+
+		// 3. DRAW THE POPUP
+		if (ImGui::BeginPopupModal("Edit Window", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+
+			// --- TITLE ---
+			ImGui::SetWindowFontScale(1.25f);
+			ImGui::PushItemWidth(380.0f);
+			ImGui::InputText("##EditTitle", edit_title, sizeof(edit_title));
+			ImGui::PopItemWidth();
+			ImGui::Separator();
+
+			float label_align = 140.0f;
+
+			// --- START TIME (Your exact layout code) ---
+			ImGui::AlignTextToFramePadding();
+			ImGui::Text("Start Time :"); ImGui::SameLine(label_align);
+			ImGui::PushItemWidth(35.0f);
+			ImGui::DragInt("##sD", &s_day, 0.5f, 1, 31, "%02d"); ImGui::SameLine(); ImGui::Text("/"); ImGui::SameLine();
+			ImGui::DragInt("##sM", &s_mon, 0.5f, 1, 12, "%02d"); ImGui::SameLine(); ImGui::Text("/"); ImGui::SameLine();
+			ImGui::PushItemWidth(55.0f);
+			ImGui::DragInt("##sY", &s_year, 0.5f, 2024, 2050, "%d"); ImGui::PopItemWidth(); ImGui::SameLine(); ImGui::Text(",  "); ImGui::SameLine();
+			ImGui::DragInt("##sh", &s_hour, 0.5f, 0, 23, "%02d"); ImGui::SameLine(); ImGui::Text(":"); ImGui::SameLine();
+			ImGui::DragInt("##sm", &s_min, 0.5f, 0, 59, "%02d");
+			ImGui::PopItemWidth();
+
+			// --- END TIME (Your exact layout code) ---
+			ImGui::AlignTextToFramePadding();
+			ImGui::Text("End Time   :"); ImGui::SameLine(label_align);
+			ImGui::PushItemWidth(35.0f);
+			ImGui::DragInt("##eD", &e_day, 0.5f, 1, 31, "%02d"); ImGui::SameLine(); ImGui::Text("/"); ImGui::SameLine();
+			ImGui::DragInt("##eM", &e_mon, 0.5f, 1, 12, "%02d"); ImGui::SameLine(); ImGui::Text("/"); ImGui::SameLine();
+			ImGui::PushItemWidth(55.0f);
+			ImGui::DragInt("##eY", &e_year, 0.5f, 2024, 2050, "%d"); ImGui::PopItemWidth(); ImGui::SameLine(); ImGui::Text(",  "); ImGui::SameLine();
+			ImGui::DragInt("##eh", &e_hour, 0.5f, 0, 23, "%02d"); ImGui::SameLine(); ImGui::Text(":"); ImGui::SameLine();
+			ImGui::DragInt("##emin", &e_min, 0.5f, 0, 59, "%02d");
+			ImGui::PopItemWidth();
+
+			// --- CATEGORY ---
+			ImGui::AlignTextToFramePadding();
+			ImGui::Text("Category   :"); ImGui::SameLine(label_align);
+			ImGui::PushItemWidth(180.0f);
+			std::vector<std::string> cats = myCalendar.getCategories();
+			if (!cats.empty()) {
+				if (ImGui::BeginCombo("##EditCat", cats[selected_cat_idx].c_str())) {
+					for (int i = 0; i < cats.size(); i++) {
+						bool is_selected = (selected_cat_idx == i);
+						if (ImGui::Selectable(cats[i].c_str(), is_selected)) selected_cat_idx = i;
+						if (is_selected) ImGui::SetItemDefaultFocus();
+					}
+					ImGui::EndCombo();
+				}
+			}
+			ImGui::PopItemWidth();
+
+			// --- LOCATION ---
+			ImGui::AlignTextToFramePadding();
+			ImGui::Text("Location   :"); ImGui::SameLine(label_align);
+			ImGui::PushItemWidth(250.0f);
+			ImGui::InputText("##EditLoc", edit_location, sizeof(edit_location));
+			ImGui::PopItemWidth();
+
+			// --- DETAILS ---
+			ImGui::SeparatorText("Details");
+			ImGui::InputTextMultiline("##EditDet", edit_details, sizeof(edit_details), ImVec2(380.0f, 120.0f), ImGuiInputTextFlags_WordWrap);
+
+			ImGui::Dummy(ImVec2(0.0f, 10.0f));
+
+			// --- SAVE & CANCEL BUTTONS ---
+			ImVec2 buttonSize(80, 30);
+			float targetX = ImGui::GetWindowWidth() - (buttonSize.x * 2.0f) - ImGui::GetStyle().ItemSpacing.x - 10.0f;
+			ImGui::SetCursorPosX(targetX);
+
+			if (ImGui::Button("Cancel", buttonSize)) {
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::SameLine();
+
+			if (ImGui::Button("Save", buttonSize)) {
+				// Convert the numbers from the DragInt boxes straight into time_t
+				time_t new_start = Utils::DMYtoTime(s_day, s_mon, s_year, s_hour, s_min);
+				time_t new_end = Utils::DMYtoTime(e_day, e_mon, e_year, e_hour, e_min);
+				std::string selected_cat_name = cats.empty() ? "Default" : cats[selected_cat_idx];
+
+				Event updated_event(
+					edit_title, new_start, new_end, selected_cat_name, edit_details, edit_location, current_editing_event.getID()
+				);
+
+				myCalendar.editEvent(current_editing_event.getID(), updated_event);
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
+	}
+
 	void thisistest(){
 
 		// 1. Create a window class to override the docking behavior
@@ -215,60 +328,19 @@ namespace cgui
 		ImGui::End();
 	}
 
-	void DrawCalendar()
-	{
-		ImGui::Begin("Calendar", NULL, ImGuiWindowFlags_NoCollapse);
-		
-		if (ImGui::BeginTable("CalendarTable", 7)) {
-			//int ThisYear = 2026; //recive from input kub
-			//int ThisMonth = 1; //also this na
-
-			//header of calendar
-			const char* days[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
-			//ImGui::TableHeadersRow();
-			ImGui::TableNextRow();
-			for (int i = 0; i < 7; i++) {
-				ImGui::TableSetColumnIndex(i);
-
-				ImVec2 text_size = ::ImGui::CalcTextSize(days[i]);
-				float available_width = ::ImGui::GetContentRegionAvail().x;
-				float offset = (available_width - text_size.x) * 0.5f;
-				ImGui::SetCursorPosX(::ImGui::GetCursorPosX() + offset);
-				ImGui::Text("%s", days[i]);
-			}
-
-			//days of month
-			static int DayOne = FirstDayOfMonth(ThisYear, ThisMonth); //position of the first day of the month
-			static int AllDay = HowManyDaysInThisMonth(ThisYear, ThisMonth);
-
-			int nday = 1;
-			for (int i = 0; i < 6; i++) {
-				ImGui::TableNextRow();
-				for (int j = 0; j < 7; j++) {
-					ImGui::TableSetColumnIndex(j);
-					if (i == 0 && j < DayOne) ::ImGui::Text("");
-					else if (nday > AllDay) ::ImGui::Text("");
-					else {
-						std::string day_str = std::to_string(nday);
-						ImVec2 text_size = ::ImGui::CalcTextSize(day_str.c_str());
-						float available_width = ::ImGui::GetContentRegionAvail().x;
-						float offset = (available_width - text_size.x) * 0.5f;
-						ImGui::SetCursorPosX(::ImGui::GetCursorPosX() + offset);
-						ImGui::Text("%s", day_str.c_str());
-						nday++;
-					}
-				}
-			}
-			ImGui::EndTable();
-		}
-		ImGui::End();
-	}
-
 	void DrawCalendarV2() 
 	{
-		ImGui::Begin("Calendar", NULL, ImGuiWindowFlags_NoCollapse);
-		static int ThisYear = 2026; //recive from input kub
-		static int ThisMonth = 1; //also this na
+		ImGuiWindowClass window_class;
+		window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
+		ImGui::SetNextWindowClass(&window_class);
+
+		ImGui::Begin("Calendar", NULL, ImGuiWindowFlags_NoTitleBar);
+
+		//get current date for month and year as a default opening kub
+		std::time_t currentTime = std::time(nullptr);
+		auto [current_day, current_month, current_year, current_hour, current_minute] = Utils::timeToDMY(currentTime);
+		static int ThisYear = current_year; 
+		static int ThisMonth = current_month;
 
 		const char* month_names[] = { "January", "February", "March", "April", "May", "June",
 										 "July", "August", "September", "October", "November", "December" };
@@ -291,29 +363,29 @@ namespace cgui
 		// ใช้ SameLine แล้วใส่ค่า offset เข้าไป เพื่อดันปุ่มไปขวาสุด
 		ImGui::SameLine(right_align_x);
 
-		// ดันการตั้งค่าสีใหม่เข้าไป: ทำให้กล่องโปร่งใส และตัวหนังสือสีขาว
+		//ทำให้กล่องโปร่งใส และตัวหนังสือสีขาว
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // พื้นหลังปกติโปร่งใส (No box)
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 1.0f, 1.0f, 0.1f)); // ตอนเมาส์ชี้ (ไฮไลท์จางๆ ถ้าไม่ชอบให้เปลี่ยนตัวท้ายเป็น 0.0f)
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1.0f, 1.0f, 1.0f, 0.2f)); // ตอนกดคลิก
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f)); // ตัวอักษรสีขาว
-		//ย้อนกลับ <
-		if (ImGui::Button("<", ImVec2(box_w, 0))) {
+		
+		// > <
+		if (ImGui::ArrowButton("##left", ImGuiDir_Left)) { 
 			ThisMonth--;
 			if (ThisMonth < 1) {
 				ThisMonth = 12;
 				ThisYear--;
 			}
 		}
-
-		//ถัดไป >
-		ImGui::SameLine();
-		if (ImGui::Button(">", ImVec2(box_w, 0))) {
+		ImGui::SameLine(0.0f, spacing);
+		if (ImGui::ArrowButton("##right", ImGuiDir_Right)) { 
 			ThisMonth++;
 			if (ThisMonth > 12) {
 				ThisMonth = 1;
 				ThisYear++;
 			}
 		}
+
 		ImGui::PopStyleColor(4);
 		ImGui::Dummy(ImVec2(0.0f, 5.0f));
 		ImGui::Separator();
@@ -339,7 +411,6 @@ namespace cgui
 			int DayOne = FirstDayOfMonth(ThisYear, ThisMonth); //position of the first day of the month
 			int AllDay = HowManyDaysInThisMonth(ThisYear, ThisMonth);
 
-			//static int selected_day = -1;
 			int nday = 1;
 			for (int i = 0; i < 6; i++) {
 				ImGui::TableNextRow();
@@ -359,6 +430,8 @@ namespace cgui
 						bool is_selected = (selected_day == nday);
 						if (ImGui::Selectable("##day", is_selected, 0, ImVec2(cell_w, cell_h))) {
 							selected_day = nday;
+							selected_month = ThisMonth;
+							selected_year = ThisYear;
 						}
 
 						//fill numbers
@@ -371,7 +444,10 @@ namespace cgui
 						draw_list->AddText(text_pos, ImGui::GetColorU32(ImGuiCol_Text), day_str.c_str());
 						
 						// fill event dots if there are any
-						int num_events = 3; // Example: test with more than 8
+						std::vector<Event> events_today = myCalendar.getEventsByDate(nday, ThisMonth, ThisYear);
+						int num_events = events_today.size();
+
+						auto category_color = myCalendar.getColorCategory();
 
 						if (num_events > 0)
 						{
@@ -388,13 +464,6 @@ namespace cgui
 							float total_height = (num_rows * dot_size) + ((num_rows - 1) * row_spacing);
 							float start_y = cursor_pos.y + (cell_h - total_height) * 0.5f + dot_radius;
 
-							ImU32 category_colors[] = {
-								IM_COL32(255, 50, 50, 150),
-								IM_COL32(50, 255, 50, 150),
-								IM_COL32(50, 150, 255, 150),
-								IM_COL32(255, 200, 50, 150)
-							};
-
 							for (int row = 0; row < num_rows; ++row)
 							{
 								// Calculate how many dots are in this specific row
@@ -408,44 +477,29 @@ namespace cgui
 								for (int col = 0; col < dots_in_this_row; ++col)
 								{
 									int event_index = row * max_per_row + col;
-									ImU32 dot_color = category_colors[event_index % 4];
+									ImU32 dot_color = IM_COL32(150, 150, 150, 200);
 
+									// --- 2. เช็ค Category และดึงสีมาใช้ ---
+									if (event_index < events_today.size()) {
+										std::string cat_name = events_today[event_index].getCategory();
+
+										for (const auto& cat : category_color) {
+											if (cat.first == cat_name) {
+												// Unpack Tuple กลับมาเป็น r, g, b, a
+												auto [r, g, b, a] = cat.second;
+
+												// แปลงทศนิยมเป็นรหัสสี ImU32
+												dot_color = ImGui::ColorConvertFloat4ToU32(ImVec4(r, g, b, a));
+												break;
+											}
+										}
+									}
 									draw_list->AddCircleFilled(ImVec2(current_x, current_y), dot_radius, dot_color);
 
 									current_x += dot_size + dot_spacing;
 								}
 							}
 						}
-						/*
-						if (nday) // is there any event on this day?
-						{
-							float event_y = cursor_pos.y + offset_y + text_size.y + 6.0f;
-							for (int i = 0; i < 4; i++) {
-								const char* event_text = " Event Namesgfdgsdsgs";
-								ImVec2 event_size = ImGui::CalcTextSize(event_text);
-
-								float padding_x = 5.0f; // Margin on the left and right
-								float event_x = cursor_pos.x + padding_x;
-								float max_x = cursor_pos.x + cell_w - padding_x;
-								float max_y = cursor_pos.y + cell_h;
-								ImVec2 event_pos = ImVec2(event_x, event_y);
-
-								ImU32 highlight_color = IM_COL32(0, 0, 200, 150);
-								draw_list->AddRectFilled(
-									event_pos,
-									ImVec2(max_x, event_pos.y + event_size.y),
-									highlight_color,
-									2.0f //rounding
-								);
-
-								ImGui::PushClipRect(event_pos, ImVec2(max_x,max_y), true); //ตัดอักษรที่เกินhighlight ออกนะ
-								draw_list->AddText(event_pos, IM_COL32(255, 255, 255, 255), event_text);
-								ImGui::PopClipRect();
-								event_y = event_y + event_size.y + 6.0f;
-								if (event_y + event_size.y + 4.0f > max_y) break;
-							}
-						}
-						*/
 						ImGui::PopID(); // คืนค่า ID
 						nday++;
 					}
@@ -501,7 +555,11 @@ namespace cgui
 			ImGui::SetNextItemWidth(150.0f);
 			static int selectedItem = 0;
 			const char* items[] = { "Work", "Personal", "Business", "Others" };
-			ImGui::Combo("##Select categories", &selectedItem, items, IM_ARRAYSIZE(items));
+			if (ImGui::Combo("##Select categories", &selectedItem, items, IM_ARRAYSIZE(items))) {
+				if (selectedItem == 3) {
+					createnewcategory = true;
+				}
+			}
 
 			/*-------------------------select date and time-----------------------------*/
 			//start
@@ -721,27 +779,187 @@ namespace cgui
 		ImGui::PopStyleColor();
 	}
 
+	void CreateNewCategory() {
+		static ImVec4 color = ImVec4(0.11f, 0.38f, 0.48f, 200.0 / 255.0f); // The currently selected color
+		static ImVec4 backup_color;                               // Saves the color in case you cancel
+		static ImVec4 saved_palette[32] = {};                     // Array to hold the 32 little palette squares
+		static bool saved_palette_init = true;
+		ImGuiColorEditFlags base_flags = ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_AlphaPreviewHalf |
+				ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_DisplayHSV |
+				ImGuiColorEditFlags_DisplayHex;
+
+		if (createnewcategory)
+		{
+			ImGui::OpenPopup("Category Color Picker");
+			createnewcategory = false;
+		}
+
+		if (saved_palette_init) {
+			for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++) {
+				ImGui::ColorConvertHSVtoRGB(n / 31.0f, 0.8f, 0.8f,
+					saved_palette[n].x, saved_palette[n].y, saved_palette[n].z);
+				saved_palette[n].w = 1.0f;
+			}
+			saved_palette_init = false;
+		}
+
+		//Popup if trigger
+		if (ImGui::BeginPopupModal("Category Color Picker", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			static char new_category[256] = "";
+			ImGui::Text("Pick a color for your new category :");
+			ImGui::InputText("##", new_category, sizeof(new_category));
+			ImGui::Separator();
+
+			// The main picker
+			ImGui::ColorPicker4("##picker", (float*)&color, base_flags | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
+			ImGui::SameLine();
+
+			// The right side panel
+			ImGui::BeginGroup();
+			ImGui::Text("Current");
+			ImGui::ColorButton("##current", color, ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_AlphaPreviewHalf, ImVec2(60, 40));
+
+			ImGui::Separator();
+			ImGui::Text("Palette");
+			for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++)
+			{
+				ImGui::PushID(n);
+				if ((n % 8) != 0) ImGui::SameLine(0.0f, ImGui::GetStyle().ItemSpacing.y);
+
+				ImGuiColorEditFlags palette_button_flags = ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip;
+				if (ImGui::ColorButton("##palette", saved_palette[n], palette_button_flags, ImVec2(20, 20)))
+					color = ImVec4(saved_palette[n].x, saved_palette[n].y, saved_palette[n].z, color.w);
+
+				if (ImGui::BeginDragDropTarget()) {
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_3F))
+						memcpy((float*)&saved_palette[n], payload->Data, sizeof(float) * 3);
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_4F))
+						memcpy((float*)&saved_palette[n], payload->Data, sizeof(float) * 4);
+					ImGui::EndDragDropTarget();
+				}
+				ImGui::PopID();
+			}
+			ImGui::EndGroup();
+
+			ImGui::Separator();
+
+			// --- NEW RIGHT-ALIGNMENT MATH ---
+			float button_width = 120.0f;
+			float spacing = ImGui::GetStyle().ItemSpacing.x;
+			float total_buttons_width = (button_width * 2.0f) + spacing;
+
+			// Calculate where the cursor needs to start to fit exactly on the right edge
+			float right_align_x = ImGui::GetWindowWidth() - total_buttons_width - ImGui::GetStyle().WindowPadding.x;
+
+			// Move the cursor to that position before drawing the first button
+			ImGui::SetCursorPosX(right_align_x);
+
+			// 4. Buttons to confirm or cancel the popup
+			if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::SetItemDefaultFocus();
+			ImGui::SameLine();
+			if (ImGui::Button("Save Color", ImVec2(120, 0))) {
+				if (strlen(new_category) > 0) {
+
+					// ImVec4 stores RGBA as x, y, z, w
+					EventCategory new_cat(std::string(new_category),
+						color.x, // R
+						color.y, // G
+						color.z, // B
+						color.w  // A
+					);
+					// 2. Push it to your main CalendarManager instance
+					myCalendar.addCategory(new_cat);
+
+					// 3. Clear the text box so it's empty next time the popup opens
+					memset(new_category, 0, sizeof(new_category));
+					myCalendar.addCategory(new_cat);
+
+					//Clear the text box so it's empty next time the popup opens
+					memset(new_category, 0, sizeof(new_category));
+
+				}
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
+		}
+	}
+
 	void UpcomingEvent()
 	{
-		ImGui::Begin("Upcoming Event", NULL, ImGuiWindowFlags_NoCollapse);
 		int n_events = 5;
 		ImFont* Title = ImGui::GetIO().Fonts->Fonts[2];
+		ImGuiWindowClass window_class;
+		window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
+		ImGui::SetNextWindowClass(&window_class);
+
+		ImGui::Begin("Upcoming Event", NULL, ImGuiDockNodeFlags_NoTabBar);
+		ImGui::SetWindowFontScale(1.25f);
+		std::vector<Event> upcoming_events = myCalendar.getUpcomingEvents(5);
 		ImGui::PushFont(Title);
 		ImGui::Text("Upcoming Events");
 		ImGui::PopFont();
-		for (int i = 0; i < n_events; i++) {
-			ImGui::PushID(i);
-			const char* event_name = "jdkas";
-			if (ImGui::CollapsingHeader(event_name)) {
-				ImGui::Text("%02d/%02d/%d", selected_day, ThisMonth, ThisYear);
-				ImGui::SeparatorText("Time");
-				ImGui::Text("10:00AM");
-				ImGui::SeparatorText("Location");
-				ImGui::SeparatorText("Details");
+
+		if (upcoming_events.empty()) {
+			ImGui::TextDisabled("No upcoming events.");
+		}
+		else {
+			for (int i = 0; i < upcoming_events.size(); i++) {
+				const Event& ev = upcoming_events[i];
+				ImGui::PushID(ev.getID());
+
+				// 1. คำนวณหาสถานะ (In progress หรือ in X days)
+				time_t now = time(nullptr);
+				std::string status_text = "";
+
+				if (now >= ev.getStartTime() && now <= ev.getEndTime()) {
+					status_text = "In progress";
+				}
+				else if (now < ev.getStartTime()) {
+					int days = difftime(ev.getStartTime(), now) / 86400;
+
+					if (days == 0) {
+						int hours = difftime(ev.getStartTime(), now) / 3600;
+						status_text = "in " + std::to_string(hours) + " hours";
+					}
+					else {
+						status_text = "in " + std::to_string(days) + " days";
+					}
+				}
+
+				bool is_open = ImGui::CollapsingHeader(ev.getTitle().c_str());
+
+				float window_width = ImGui::GetWindowContentRegionMax().x;
+				float text_width = ImGui::CalcTextSize(status_text.c_str()).x;
+
+				ImGui::SameLine(window_width - text_width);
+				ImGui::TextDisabled("%s", status_text.c_str());
+
+				if (is_open) {
+					auto [s_day, s_month, s_year, s_hour, s_min] = Utils::timeToDMY(ev.getStartTime());
+					auto [e_day, e_month, e_year, e_hour, e_min] = Utils::timeToDMY(ev.getEndTime());
+
+					ImGui::SeparatorText("Time");
+					ImGui::Text("%02d/%02d/%d (%02d:%02d) - %02d/%02d/%d (%02d:%02d)",
+						s_day, s_month, s_year, s_hour, s_min,
+						e_day, e_month, e_year, e_hour, e_min);
+
+					ImGui::SeparatorText("Location");
+					ImGui::Text("%s", ev.getPlaces().c_str());
+
+					ImGui::SeparatorText("Details");
+					ImGui::TextWrapped("%s", ev.getDetails().c_str());
+				}
+
+				ImGui::PopID();
 			}
-			ImGui::PopID();
 		}
 
+		//----------------------------------------------
 		ImVec2 buttonSize(60, 60);
 
 		float WindowHeight = ImGui::GetWindowHeight();
