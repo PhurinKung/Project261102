@@ -15,17 +15,14 @@
 using namespace std;
 
 tuple<int, int, int, int, int> timeToDMY(time_t tme) { // day month year hour minute
-	tm* local_time = localtime(&tme);
+	tm local_time;
+	localtime_s(&local_time, &tme);
 
-	if (local_time == nullptr) {
-		return make_tuple(0, 0, 0, 0, 0); // หรือ throw exception อื่น ๆ 
-	}
-
-	int day = local_time->tm_mday;       // (1 - 31)
-	int month = local_time->tm_mon + 1;  // (0 - 11) -> +1 = 1 - 12 
-	int year = local_time->tm_year + 1900; // start from 1900 -> +1900 get current year
-	int hour = local_time->tm_hour;
-	int minute = local_time->tm_min;
+	int day = local_time.tm_mday;       // (1 - 31)
+	int month = local_time.tm_mon + 1;  // (0 - 11) -> +1 = 1 - 12 
+	int year = local_time.tm_year + 1900; // start from 1900 -> +1900 get current year
+	int hour = local_time.tm_hour;
+	int minute = local_time.tm_min;
 
 	return make_tuple(day, month, year, hour, minute);
 }
