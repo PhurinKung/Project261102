@@ -905,23 +905,50 @@ namespace cgui
 			for (int i = 0; i < upcoming_events.size(); i++) {
 				const Event& ev = upcoming_events[i];
 				ImGui::PushID(ev.getID());
-				const char* event_name = ev.getTitle().c_str();
-				if (ImGui::CollapsingHeader(ev.getTitle().c_str())) {
 
+				// 1. คำนวณหาสถานะ (In progress หรือ in X days)
+				time_t now = time(nullptr);
+				std::string status_text = "";
+
+				if (now >= ev.getStartTime() && now <= ev.getEndTime()) {
+					status_text = "In progress";
+				}
+				else if (now < ev.getStartTime()) {
+					int days = difftime(ev.getStartTime(), now) / 86400;
+
+					if (days == 0) {
+						int hours = difftime(ev.getStartTime(), now) / 3600;
+						status_text = "in " + std::to_string(hours) + " hours";
+					}
+					else {
+						status_text = "in " + std::to_string(days) + " days";
+					}
+				}
+
+				bool is_open = ImGui::CollapsingHeader(ev.getTitle().c_str());
+
+				float window_width = ImGui::GetWindowContentRegionMax().x;
+				float text_width = ImGui::CalcTextSize(status_text.c_str()).x;
+
+				ImGui::SameLine(window_width - text_width);
+				ImGui::TextDisabled("%s", status_text.c_str());
+
+				if (is_open) {
 					auto [s_day, s_month, s_year, s_hour, s_min] = Utils::timeToDMY(ev.getStartTime());
 					auto [e_day, e_month, e_year, e_hour, e_min] = Utils::timeToDMY(ev.getEndTime());
 
-					ImGui::Text("Date: %02d/%02d/%d", s_day, s_month, s_year);
-
 					ImGui::SeparatorText("Time");
-					ImGui::Text("%02d:%02d - %02d:%02d", s_hour, s_min, e_hour, e_min);
+					ImGui::Text("%02d/%02d/%d (%02d:%02d) - %02d/%02d/%d (%02d:%02d)",
+						s_day, s_month, s_year, s_hour, s_min,
+						e_day, e_month, e_year, e_hour, e_min);
 
 					ImGui::SeparatorText("Location");
 					ImGui::Text("%s", ev.getPlaces().c_str());
 
 					ImGui::SeparatorText("Details");
-					ImGui::TextWrapped("%s", ev.getDetails().c_str()); // ใช้ TextWrapped เผื่อพิมพ์ยาวจะได้ไม่ทะลุขอบ
+					ImGui::TextWrapped("%s", ev.getDetails().c_str());
 				}
+
 				ImGui::PopID();
 			}
 		}
