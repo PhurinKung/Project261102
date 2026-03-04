@@ -35,10 +35,46 @@ CalendarManager::CalendarManager() { loadFromFile(); }
 CalendarManager::~CalendarManager() { saveToFile(); }
 
 void CalendarManager::loadFromFile() {
-	// todo : recieve all data from filename to vector<Event>
-	// dont forget to run id -> set nextID to maxid + 1
+	//load from data
+	std::ifstream src;
+	std::string line;
 
-	// ? : if we already have data should we delete first ?
+	if (!src.is_open()) return;
+	
+	allEvents.clear();
+
+	unsigned long long MAXID = 0;
+	while (getline(src, line)) {
+		if (line.empty()) continue;
+
+		std::stringstream S(line);
+		std::string temporary;
+		std::vector<std::string> data;
+		
+		while (getline(S, temporary, '|')) {
+			data.push_back(temporary);
+		}
+
+		if (data.size() != 7) return;
+
+		std::string title = data[0];
+		time_t StartTime = stoll(data[1])
+			, EndTime = stoll(data[2]);
+		std::string category = data[3]
+			, detail = data[4]
+			, place = data[5];
+		unsigned long long ID = stoull(data[6]);
+
+		Event LoadedEvent(title,StartTime,EndTime,category,detail,place,ID);
+
+		MAXID = std::max(ID,MAXID);
+	}
+
+	src.close();
+	
+	nextID = MAXID + 1;
+	this->sortEvents();
+	return ;
 }
 
 void CalendarManager::saveToFile() {
@@ -56,7 +92,16 @@ void CalendarManager::saveToFile() {
 	dest.close();
 	// end ------ save data
 
+	//start ----- save category
+	dest.open(categories_data_filename);
+	float r, g, b, a;
 
+	for (const auto& i : categories) {
+		std::tie(r, g, b, a) = i.getRGB();
+		dest << i.getname() << "|" << r << "|" << g << "|" << b << "|" << a << "\n";
+	}
+
+	dest.close();
 
 	return;
 }
@@ -110,7 +155,7 @@ std::pair<bool, std::string> CalendarManager::editEvent(unsigned long long event
 			return { true, "Success" };
 		}
 	}
-	std::string ErrorMSG = "Can not find this [" + to_string(eventId) + "] id";
+	std::string ErrorMSG = "Can not find this [" + std::to_string(eventId) + "] id";
 	return { false, ErrorMSG };
 }
 
@@ -167,8 +212,8 @@ std::vector<Event> CalendarManager::getUpcomingEvents(int N) {
 	return upcoming;
 }
 
-std::vector<string> CalendarManager::getCategories() {
-	std::vector<string> vec;
+std::vector<std::string> CalendarManager::getCategories() {
+	std::vector<std::string> vec;
 	for (const auto& i : categories) {
 		vec.push_back(i.getname());
 	}
