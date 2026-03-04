@@ -294,6 +294,7 @@ namespace cgui
 		ImGui::End();
 	}
 
+	//add new event
 	bool isNewEventOpen = false;
 	void NewEvent() {
 		if (isNewEventOpen) {
@@ -325,13 +326,156 @@ namespace cgui
 			const char* items[] = { "Work", "Personal", "Business", "Others" };
 			ImGui::Combo("###Select Fruit", &selectedItem, items, IM_ARRAYSIZE(items));
 
+			/*-------------------------select date and time-----------------------------*/
+			//start
+			ImGui::Text("STARTS");
+			ImGui::SameLine();
 
+			static int startdate = 0;
+			const char* Date[] = {
+				"1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
+				"11", "12", "13", "14", "15", "16", "17", "18", "19", "20",
+				"21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31"
+			};
+			ImGui::SetNextItemWidth(60.0f);
+			ImGui::Combo("##Select startdate", &startdate, Date, IM_ARRAYSIZE(Date));
+			ImGui::SameLine();
 
-			//details
+			static int startmonth = 0;
+			const char* Month[] = {
+				"JAN", "FEB", "MAR", "APR", "MAY", "JUN","JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
+			};
+			ImGui::SetNextItemWidth(75.0f);
+			ImGui::Combo("##Select Month", &startmonth, Month, IM_ARRAYSIZE(Month));
+			ImGui::SameLine();
+
+			static int startyear = 0;
+			const char* Year[] = {
+				"2026", "2027", "2028", "2029", "2030", "2031","2032", "2033", "2034", "2035", "2036"
+			};
+			ImGui::SetNextItemWidth(75.0f);
+			ImGui::Combo("##Select Year", &startyear, Year, IM_ARRAYSIZE(Year));
+			ImGui::SameLine(0.0f, 30.0f);
+
+			//start time
+			ImGui::Text("Time :");
+			ImGui::SameLine();
+
+			static int startHour = 0;
+			char hourPreview[8];
+			snprintf(hourPreview, sizeof(hourPreview), "%02d", startHour);
+
+			ImGui::SetNextItemWidth(60.0f);
+			if (ImGui::BeginCombo("##StartHour", hourPreview)) {
+				for (int h = 0; h < 24; h++) {
+					char buf[8];
+					snprintf(buf, sizeof(buf), "%02d", h);
+
+					bool isSelected = (startHour == h);
+					if (ImGui::Selectable(buf, isSelected)) {
+						startHour = h;
+					}
+					if (isSelected) ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			ImGui::SameLine();
+			ImGui::Text(" : ");
+			ImGui::SameLine();
+
+			static int startMin = 0;
+			char minPreview[8];
+			snprintf(minPreview, sizeof(minPreview), "%02d", startMin);
+
+			ImGui::SetNextItemWidth(60.0f);
+			if (ImGui::BeginCombo("##StartMin", minPreview)) {
+				for (int m = 0; m <= 60; m++) {
+					char buf[8];
+					snprintf(buf, sizeof(buf), "%02d", m);
+
+					bool isSelected = (startMin == m);
+					if (ImGui::Selectable(buf, isSelected)) {
+						startMin = m;
+					}
+					if (isSelected) ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+
+			//End
+			ImGui::Text("ENDS");
+			ImGui::SameLine(0.0f, 25.0f);
+
+			ImGui::SetNextItemWidth(60.0f);
+			static int enddate = 0;
+			ImGui::Combo("##Select enddate", &enddate, Date, IM_ARRAYSIZE(Date));
+			ImGui::SameLine();
+
+			ImGui::SetNextItemWidth(75.0f);
+			static int endMonth = 0;
+			ImGui::Combo("##Select endMonth", &endMonth, Month, IM_ARRAYSIZE(Month));
+			ImGui::SameLine();
+
+			ImGui::SetNextItemWidth(75.0f);
+			static int endYear = 0;
+			ImGui::Combo("##Select endYear", &endYear, Year, IM_ARRAYSIZE(Year));
+			ImGui::SameLine(0.0f, 30.0f);
+
+			//end time
+			ImGui::Text("Time :");
+			ImGui::SameLine();
+
+			static int endHour = 0;
+			char hourEndPreview[8];
+			snprintf(hourEndPreview, sizeof(hourEndPreview), "%02d", endHour);
+
+			ImGui::SetNextItemWidth(60.0f);
+			if (ImGui::BeginCombo("##EndHour", hourEndPreview)) {
+				for (int h = 0; h < 24; h++) {
+					char buf[8];
+					snprintf(buf, sizeof(buf), "%02d", h);
+
+					bool isSelected = (endHour == h);
+					if (ImGui::Selectable(buf, isSelected)) {
+						endHour = h;
+					}
+					if (isSelected) ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			ImGui::SameLine();
+			ImGui::Text(" : ");
+			ImGui::SameLine();
+
+			static int endMin = 0;
+			char minEndPreview[8];
+			snprintf(minEndPreview, sizeof(minEndPreview), "%02d", endMin);
+
+			ImGui::SetNextItemWidth(60.0f);
+			if (ImGui::BeginCombo("##EndMin", minEndPreview)) {
+				for (int m = 0; m <= 60; m++) {
+					char buf[8];
+					snprintf(buf, sizeof(buf), "%02d", m);
+
+					bool isSelected = (endMin == m);
+					if (ImGui::Selectable(buf, isSelected)) {
+						endMin = m;
+					}
+					if (isSelected) ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			
+
+			/*------------------------------------------------------------------*/
+
+			/*------------------------details---------------------------*/
 			static char detail[1024] = "";
 			ImVec2 boxSize(-20.0f, 150.0f);
 			ImGui::InputTextMultiline("##Detail", detail, sizeof(detail), boxSize);
+			/*----------------------------------------------------------*/
 
+			//save button
 			ImVec2 buttonSize(50, 35);
 
 			float WindowHeight = ImGui::GetWindowHeight();
