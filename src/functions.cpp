@@ -1,7 +1,7 @@
 #include "functions.h"
 // complete all func in functions.h
 
-tuple<int, int, int, int, int> timeToDMY(time_t tme) { // day month year hour minute
+std::tuple<int, int, int, int, int> timeToDMY(time_t tme) { // day month year hour minute
 	tm local_time;
 	localtime_s(&local_time, &tme);
 
@@ -11,7 +11,7 @@ tuple<int, int, int, int, int> timeToDMY(time_t tme) { // day month year hour mi
 	int hour = local_time.tm_hour;
 	int minute = local_time.tm_min;
 
-	return make_tuple(day, month, year, hour, minute);
+	return std::make_tuple(day, month, year, hour, minute);
 }
 
 time_t DMYtoTime(int day, int month, int year, int hour , int minute ) {
@@ -44,7 +44,7 @@ void CalendarManager::loadFromFile() {
 void CalendarManager::saveToFile() {
 	// start ------ save data
 	time_t now = time(nullptr);
-	ofstream dest(data_filename);
+	std::ofstream dest(data_filename);
 
 	for (const auto& i : allEvents) {
 		if (i.getEndTime() < now) continue;
@@ -66,7 +66,7 @@ void CalendarManager::sortEvents() {
 }
 
 
-pair<bool, string> CalendarManager::addEvent(Event newEvent) {
+std::pair<bool, std::string> CalendarManager::addEvent(Event newEvent) {
 	if (newEvent.getStartTime() > newEvent.getEndTime()) {
 		return { false, "Start time must less than or equal to End time" };
 	}
@@ -76,7 +76,7 @@ pair<bool, string> CalendarManager::addEvent(Event newEvent) {
 	return { true, "Success" };
 }
 
-pair<bool, string> CalendarManager::deleteEvent(unsigned long long eventId) {
+std::pair<bool, std::string> CalendarManager::deleteEvent(unsigned long long eventId) {
 	auto it = find_if(allEvents.begin(), allEvents.end(),
 		[eventId](const Event& e) {
 			return e.getID() == eventId;
@@ -87,12 +87,12 @@ pair<bool, string> CalendarManager::deleteEvent(unsigned long long eventId) {
 		return { true, "Success" };
 	}
 
-	string ErrorMSG = "Can not find this [" + to_string(eventId) + "] id";
+	std::string ErrorMSG = "Can not find this [" + std::to_string(eventId) + "] id";
 
 	return { false, ErrorMSG };
 }
 
-pair<bool, string> CalendarManager::editEvent(unsigned long long eventId, Event updatedEvent) {
+std::pair<bool, std::string> CalendarManager::editEvent(unsigned long long eventId, Event updatedEvent) {
 	//todo : look for this eventId and update
 	//if the date is change then sort (or just sort every time)
 	//return true if sucsess
@@ -110,17 +110,17 @@ pair<bool, string> CalendarManager::editEvent(unsigned long long eventId, Event 
 			return { true, "Success" };
 		}
 	}
-	string ErrorMSG = "Can not find this [" + to_string(eventId) + "] id";
+	std::string ErrorMSG = "Can not find this [" + to_string(eventId) + "] id";
 	return { false, ErrorMSG };
 }
 
-const vector<Event>& CalendarManager::getAllEvents() const {
+const std::vector<Event>& CalendarManager::getAllEvents() const {
 	return allEvents;
 }
 
-vector<Event> CalendarManager::getEventsByDate(int day, int month, int year) {
+std::vector<Event> CalendarManager::getEventsByDate(int day, int month, int year) {
 	//todo : getallEvent on Date
-	vector<Event> eventsOnDate;
+	std::vector<Event> eventsOnDate;
 
 	time_t startofthisdate = DMYtoTime(day, month, year, 0, 0);
 	time_t endofthisdate = DMYtoTime(day, month, year, 23, 59);
@@ -133,13 +133,13 @@ vector<Event> CalendarManager::getEventsByDate(int day, int month, int year) {
 	return eventsOnDate;
 }
 
-bool findthisword(string keyword, string source) {
+bool findthisword(std::string keyword, std::string source) {
 	transform(source.begin(), source.end(), source.begin(), ::tolower);
-	return (source.find(keyword) != string::npos);
+	return (source.find(keyword) != std::string::npos);
 }
 
-vector<Event> CalendarManager::searchEvents(string keyword) {
-	vector<Event> KeywordFoundEvents;
+std::vector<Event> CalendarManager::searchEvents(std::string keyword) {
+	std::vector<Event> KeywordFoundEvents;
 	transform(keyword.begin(), keyword.end(), keyword.begin(), ::tolower);
 
 	for (auto i : allEvents) {
@@ -160,23 +160,23 @@ vector<Event> CalendarManager::searchEvents(string keyword) {
 	return KeywordFoundEvents;
 }
 
-vector<Event> CalendarManager::getUpcomingEvents(int N) {
-	vector<Event> upcoming;
-	int n = min(N, (int)allEvents.size());
+std::vector<Event> CalendarManager::getUpcomingEvents(int N) {
+	std::vector<Event> upcoming;
+	int n = std::min(N, (int)allEvents.size());
 	for (int i = 0; i < n; ++i) upcoming.push_back(allEvents[i]);
 	return upcoming;
 }
 
-vector<string> CalendarManager::getCategories() {
-	vector<string> vec;
+std::vector<string> CalendarManager::getCategories() {
+	std::vector<string> vec;
 	for (const auto& i : categories) {
 		vec.push_back(i.getname());
 	}
 	return vec;
 }
 
-vector<pair<string, tuple<float, float, float, float >>> CalendarManager::getColorCategory() {
-	vector<pair<string, tuple<float, float, float, float>>> vec;
+std::vector<std::pair<std::string, std::tuple<float, float, float, float >>> CalendarManager::getColorCategory() {
+	std::vector<std::pair<std::string, std::tuple<float, float, float, float>>> vec;
 	for (const auto& i : categories) {
 		vec.push_back({ i.getname(),i.getRGB() });
 	}
