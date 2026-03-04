@@ -1,6 +1,7 @@
 #include "calendarGUI.h"
 #include "imgui.h"
 #include "imgui_internal.h"
+#include "functions.h"
 #include <ctime>
 #include <string>
 #include <vector>
@@ -473,6 +474,7 @@ namespace cgui
 
 			ImGui::SameLine();
 
+			//close button
 			ImVec2 closeButton(20.0f, 20.0f);
 
 			float WindowWidth = ImGui::GetWindowWidth();
@@ -659,6 +661,9 @@ namespace cgui
 
 			if (ImGui::Button("save", buttonSize)) {
 				// This is where you trigger your logic!
+
+				//Event newEvent(event_name, , , items, detail, location, );
+
 
 				// Clear the text box after saving (optional)
 			}
