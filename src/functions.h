@@ -46,29 +46,29 @@ time_t DMYtoTime(int day, int month, int year, int hour = 0, int minute = 0) {
 
 class Event {
 private:
-    string title;
-    time_t E_start, E_end;
-    string category, details, places;
-    unsigned long long id;
-    
-    // note: can add more if want to
+	string title;
+	time_t E_start, E_end;
+	string category, details, places;
+	unsigned long long id;
+
+	// note: can add more if want to
 public:
-    Event(string t = "", time_t s = 0, time_t e = 0, string c = "Default", 
+	Event(string t = "", time_t s = 0, time_t e = 0, string c = "Default",
 		string d = "", string p = "", unsigned long long i = 0) { // title
-        title = t;
-        E_start = s;
-        E_end = e;
-        category = c;
-        details = d;
-        places = p;
-        id = i;
-    }
+		title = t;
+		E_start = s;
+		E_end = e;
+		category = c;
+		details = d;
+		places = p;
+		id = i;
+	}
 
-    void setID(unsigned long long n) {
-        id = n;
-    }
+	void setID(unsigned long long n) {
+		id = n;
+	}
 
-    //return private variables
+	//return private variables
 	string getTitle() const { return title; }
 	time_t getStartTime() const { return E_start; }
 	time_t getEndTime() const { return E_end; }
@@ -77,13 +77,13 @@ public:
 	string getPlaces() const { return places; }
 	unsigned long long getID() const { return id; }
 
-    // compare func for sort
-    // sort by start date, end date, id
-    bool operator<(const Event& a) const {
-        if (E_start != a.E_start) return E_start < a.E_start;
-        if (E_end != a.E_end) return E_end < a.E_end;
-        return id < a.id;
-    }
+	// compare func for sort
+	// sort by start date, end date, id
+	bool operator<(const Event& a) const {
+		if (E_start != a.E_start) return E_start < a.E_start;
+		if (E_end != a.E_end) return E_end < a.E_end;
+		return id < a.id;
+	}
 };
 
 class EventCategory {
@@ -105,34 +105,35 @@ public:
 
 class CalendarManager {
 private:
-    vector<Event> allEvents; // contains all events
-    
+	vector<Event> allEvents; // contains all events
+
 	vector<EventCategory> categories;
 
-    string datafilename = "calendar_data.txt"; // save all events in this file na / can change name na krub
+	string data_filename = "calendar_data.txt"; // save all events in this file na / can change name na krub
+	string categories_data_filename = "categories_data.txt";
 
-    void sortEvents(); //function to sort all events (by date)
-    unsigned long long nextID = 1; // ID for each events, update every time we add new one 
+	void sortEvents(); //function to sort all events (by date)
+	unsigned long long nextID = 1; // ID for each events, update every time we add new one 
 public:
-    CalendarManager(); // auto load
-    ~CalendarManager(); // auto save
+	CalendarManager(); // auto load
+	~CalendarManager(); // auto save
 
-    //file I/O
-    void saveToFile();
-    void loadFromFile();
+	//file I/O
+	void saveToFile();
+	void loadFromFile();
 
-    //core logic
+	//core logic
 	pair<bool, string> addEvent(Event newEvent); // return status and error message
 	pair<bool, string> deleteEvent(unsigned long long eventId); // return status and error message
 	pair<bool, string> editEvent(unsigned long long eventId, Event updatedEvent); // return status and error message
 
-    // Find & Search
-    const vector<Event>& getAllEvents() const; // ใช้ const& ไม่ให้ copy ข้อมูล เปลืองแรม
-    vector<Event> getEventsByDate(int day, int month, int year);
-    vector<Event> searchEvents(string keyword);
-    vector<Event> getUpcomingEvents(int N); // next N events 
+	// Find & Search
+	const vector<Event>& getAllEvents() const; // ใช้ const& ไม่ให้ copy ข้อมูล เปลืองแรม
+	vector<Event> getEventsByDate(int day, int month, int year);
+	vector<Event> searchEvents(string keyword);
+	vector<Event> getUpcomingEvents(int N); // next N events 
 
-    vector<string> getCategories();
+	vector<string> getCategories();
 	vector<pair<string, tuple<float, float, float, float >>> getColorCategory(); // return pair <string name,tuple RGBA>
 };
 
@@ -142,28 +143,44 @@ CalendarManager::CalendarManager() { loadFromFile(); }
 CalendarManager::~CalendarManager() { saveToFile(); }
 
 void CalendarManager::loadFromFile() {
-    // todo : recieve all data from filename to vector<Event>
-    // dont forget to run id -> set nextID to maxid + 1
-    
-    // ? : if we already have data should we delete first ?
+	// todo : recieve all data from filename to vector<Event>
+	// dont forget to run id -> set nextID to maxid + 1
+
+	// ? : if we already have data should we delete first ?
 }
 
 void CalendarManager::saveToFile() {
-    // todo : put all data from vector<Event>  to filename (aka. save functions)
+	// start ------ save data
+	time_t now = time(nullptr);
+	ofstream dest(data_filename);
+
+	for (const auto& i : allEvents) {
+		if (i.getEndTime() < now) continue;
+
+		dest << i.getTitle() << "|" << i.getStartTime() << "|" << i.getEndTime() << "|" << i.getCategory() << "|"
+			<< i.getDetails() << "|" << i.getPlaces() << "|" << i.getID() << "\n";
+	}
+
+	dest.close();
+	// end ------ save data
+
+
+
+	return;
 }
 
 void CalendarManager::sortEvents() {
-    sort(allEvents.begin(), allEvents.end());
+	sort(allEvents.begin(), allEvents.end());
 }
 
 
 pair<bool, string> CalendarManager::addEvent(Event newEvent) {
 	if (newEvent.getStartTime() > newEvent.getEndTime()) {
 		return { false, "Start time must less than or equal to End time" };
-    }
-    newEvent.setID(nextID++); //run id
-    allEvents.push_back(newEvent);
-    this->sortEvents();//added event then sort
+	}
+	newEvent.setID(nextID++); //run id
+	allEvents.push_back(newEvent);
+	this->sortEvents();//added event then sort
 	return { true, "Success" };
 }
 
@@ -172,11 +189,11 @@ pair<bool, string> CalendarManager::deleteEvent(unsigned long long eventId) {
 		[eventId](const Event& e) {
 			return e.getID() == eventId;
 		});
-    
-    if (it != allEvents.end()) {
-        allEvents.erase(it); //ลบ event
+
+	if (it != allEvents.end()) {
+		allEvents.erase(it); //ลบ event
 		return { true, "Success" };
-    }
+	}
 
 	string ErrorMSG = "Can not find this [" + to_string(eventId) + "] id";
 
@@ -184,33 +201,33 @@ pair<bool, string> CalendarManager::deleteEvent(unsigned long long eventId) {
 }
 
 pair<bool, string> CalendarManager::editEvent(unsigned long long eventId, Event updatedEvent) {
-    //todo : look for this eventId and update
-    //if the date is change then sort (or just sort every time)
-    //return true if sucsess
-    
+	//todo : look for this eventId and update
+	//if the date is change then sort (or just sort every time)
+	//return true if sucsess
+
 	if (updatedEvent.getStartTime() > updatedEvent.getEndTime())
 		return { false , "Start time must less than or equal to End time" };
 
 	for (auto& e : allEvents) {
 		if (e.getID() == eventId) {
 
-            updatedEvent.setID(eventId);
-            e = updatedEvent;
+			updatedEvent.setID(eventId);
+			e = updatedEvent;
 
-            sortEvents();
+			sortEvents();
 			return { true, "Success" };
-        }
-    }
+		}
+	}
 	string ErrorMSG = "Can not find this [" + to_string(eventId) + "] id";
 	return { false, ErrorMSG };
 }
 
 const vector<Event>& CalendarManager::getAllEvents() const {
-    return allEvents;
+	return allEvents;
 }
 
 vector<Event> CalendarManager::getEventsByDate(int day, int month, int year) {
-    //todo : getallEvent on Date
+	//todo : getallEvent on Date
 	vector<Event> eventsOnDate;
 
 	time_t startofthisdate = DMYtoTime(day, month, year, 0, 0);
@@ -225,37 +242,37 @@ vector<Event> CalendarManager::getEventsByDate(int day, int month, int year) {
 }
 
 bool findthisword(string keyword, string source) {
-    transform(source.begin(), source.end(), source.begin(), ::tolower);
-    return (source.find(keyword) != string::npos);
+	transform(source.begin(), source.end(), source.begin(), ::tolower);
+	return (source.find(keyword) != string::npos);
 }
 
 vector<Event> CalendarManager::searchEvents(string keyword) {
-    vector<Event> KeywordFoundEvents;
-    transform(keyword.begin(), keyword.end(), keyword.begin(), ::tolower);
+	vector<Event> KeywordFoundEvents;
+	transform(keyword.begin(), keyword.end(), keyword.begin(), ::tolower);
 
-    for (auto i : allEvents) {
-        if (findthisword(keyword, i.getTitle())) {
-            KeywordFoundEvents.push_back(i);
-            continue;
-        }
-        if (findthisword(keyword, i.getCategory())) {
-            KeywordFoundEvents.push_back(i);
-            continue;
-        }
-        if (findthisword(keyword, i.getDetails())) {
-            KeywordFoundEvents.push_back(i);
-            continue;
-        }
-    }
+	for (auto i : allEvents) {
+		if (findthisword(keyword, i.getTitle())) {
+			KeywordFoundEvents.push_back(i);
+			continue;
+		}
+		if (findthisword(keyword, i.getCategory())) {
+			KeywordFoundEvents.push_back(i);
+			continue;
+		}
+		if (findthisword(keyword, i.getDetails())) {
+			KeywordFoundEvents.push_back(i);
+			continue;
+		}
+	}
 
-    return KeywordFoundEvents;
+	return KeywordFoundEvents;
 }
 
 vector<Event> CalendarManager::getUpcomingEvents(int N) {
-    vector<Event> upcoming;
-    int n = min(N, (int)allEvents.size());
+	vector<Event> upcoming;
+	int n = min(N, (int)allEvents.size());
 	for (int i = 0; i < n; ++i) upcoming.push_back(allEvents[i]);
-    return upcoming;
+	return upcoming;
 }
 
 vector<string> CalendarManager::getCategories() {
@@ -270,6 +287,6 @@ vector<pair<string, tuple<float, float, float, float >>> CalendarManager::getCol
 	vector<pair<string, tuple<float, float, float, float>>> vec;
 	for (const auto& i : categories) {
 		vec.push_back({ i.getname(),i.getRGB() });
-    }
+	}
 	return vec;
 }
