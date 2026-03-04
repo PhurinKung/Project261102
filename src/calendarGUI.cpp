@@ -2,9 +2,7 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 #include <ctime>
-#include <string>
-#include <vector>
-#include <string>
+#include "functions.h"
 
 namespace cgui
 {
@@ -12,19 +10,24 @@ namespace cgui
 	static int ThisYear = 2026;
 	static int ThisMonth = 1;
 	static int selected_day = -1; // -1 means no day is selected yet
+	static bool createnewcategory = false;
 
 	int FirstDayOfMonth(int, int);
 	int HowManyDaysInThisMonth(int, int);
-	void DrawCalendar();
 	void DrawCalendarV2();
 	void thisistest();
 	void UpcomingEvent();
 	void NewEvent();
 	void SearchEvent();
+	void CreateNewCategory();
+	void showevent();
 	
+	struct EventCategory {
+		std::string name;
+		ImVec4 color;
+	};
 
 	void DrawCustomWindow();
-	void showevent();
 
 	void ThewholecalendarGUI() 
 	{
@@ -63,6 +66,7 @@ namespace cgui
 		UpcomingEvent();
 		NewEvent();
 		SearchEvent();
+		CreateNewCategory();
 	}
 
 	void DrawCustomWindow() {
@@ -115,6 +119,7 @@ namespace cgui
 
 		// 2. Begin your window (keep NoTitleBar so it stays clean if you ever undock it)
 		ImGui::Begin("showevent", nullptr, ImGuiWindowFlags_NoTitleBar);
+		ImGui::SetWindowFontScale(1.25f);
 		std::vector<std::string>events = {"one day", "ow day"};
 		if (selected_day != -1)
 		{
@@ -126,9 +131,9 @@ namespace cgui
 				if (ImGui::BeginTabBar("EventTabs")) {
 					for (auto& tab : events) {
 						if (ImGui::BeginTabItem(tab.c_str())) {
-							ImGui::SetWindowFontScale(1.5f);
+							ImGui::SetWindowFontScale(1.75f);
 							ImGui::Text("%s", tab.c_str());
-							ImGui::SetWindowFontScale(1.0f);
+							ImGui::SetWindowFontScale(1.25f);
 							//ImGui::Dummy(ImVec2(0.0f, 0.5f));
 							ImGui::Text("%02d/%02d/%d", selected_day, ThisMonth, ThisYear);
 
@@ -214,58 +219,13 @@ namespace cgui
 		ImGui::End();
 	}
 
-	void DrawCalendar()
-	{
-		ImGui::Begin("Calendar", NULL, ImGuiWindowFlags_NoCollapse);
-		
-		if (ImGui::BeginTable("CalendarTable", 7)) {
-			//int ThisYear = 2026; //recive from input kub
-			//int ThisMonth = 1; //also this na
-
-			//header of calendar
-			const char* days[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
-			//ImGui::TableHeadersRow();
-			ImGui::TableNextRow();
-			for (int i = 0; i < 7; i++) {
-				ImGui::TableSetColumnIndex(i);
-
-				ImVec2 text_size = ::ImGui::CalcTextSize(days[i]);
-				float available_width = ::ImGui::GetContentRegionAvail().x;
-				float offset = (available_width - text_size.x) * 0.5f;
-				ImGui::SetCursorPosX(::ImGui::GetCursorPosX() + offset);
-				ImGui::Text("%s", days[i]);
-			}
-
-			//days of month
-			static int DayOne = FirstDayOfMonth(ThisYear, ThisMonth); //position of the first day of the month
-			static int AllDay = HowManyDaysInThisMonth(ThisYear, ThisMonth);
-
-			int nday = 1;
-			for (int i = 0; i < 6; i++) {
-				ImGui::TableNextRow();
-				for (int j = 0; j < 7; j++) {
-					ImGui::TableSetColumnIndex(j);
-					if (i == 0 && j < DayOne) ::ImGui::Text("");
-					else if (nday > AllDay) ::ImGui::Text("");
-					else {
-						std::string day_str = std::to_string(nday);
-						ImVec2 text_size = ::ImGui::CalcTextSize(day_str.c_str());
-						float available_width = ::ImGui::GetContentRegionAvail().x;
-						float offset = (available_width - text_size.x) * 0.5f;
-						ImGui::SetCursorPosX(::ImGui::GetCursorPosX() + offset);
-						ImGui::Text("%s", day_str.c_str());
-						nday++;
-					}
-				}
-			}
-			ImGui::EndTable();
-		}
-		ImGui::End();
-	}
-
 	void DrawCalendarV2() 
 	{
-		ImGui::Begin("Calendar", NULL, ImGuiWindowFlags_NoCollapse);
+		ImGuiWindowClass window_class;
+		window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
+		ImGui::SetNextWindowClass(&window_class);
+
+		ImGui::Begin("Calendar", NULL, ImGuiWindowFlags_NoTitleBar);
 		static int ThisYear = 2026; //recive from input kub
 		static int ThisMonth = 1; //also this na
 
@@ -485,7 +445,11 @@ namespace cgui
 			ImGui::SetNextItemWidth(150.0f);
 			static int selectedItem = 0;
 			const char* items[] = { "Work", "Personal", "Business", "Others" };
-			ImGui::Combo("##Select categories", &selectedItem, items, IM_ARRAYSIZE(items));
+			if (ImGui::Combo("##Select categories", &selectedItem, items, IM_ARRAYSIZE(items))) {
+				if (selectedItem == 3) {
+					createnewcategory = true;
+				}
+			}
 
 			/*-------------------------select date and time-----------------------------*/
 			//start
@@ -667,12 +631,122 @@ namespace cgui
 	}
 
 	void CreateNewCategory() {
+		static ImVec4 color = ImVec4(0.11f, 0.38f, 0.48f, 200.0 / 255.0f); // The currently selected color
+		static ImVec4 backup_color;                               // Saves the color in case you cancel
+		static ImVec4 saved_palette[32] = {};                     // Array to hold the 32 little palette squares
+		static bool saved_palette_init = true;
+		ImGuiColorEditFlags base_flags = ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_AlphaPreviewHalf |
+				ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_DisplayHSV |
+				ImGuiColorEditFlags_DisplayHex;
+		//test category
+		static std::vector<EventCategory> my_categories = {
+			{"CTF Competition", ImVec4(1.0f, 0.3f, 0.3f, 1.0f)}, // สีแดง
+			{"C++ Project",     ImVec4(0.2f, 0.6f, 1.0f, 1.0f)}, // สีฟ้า
+			{"Game Dev",        ImVec4(0.6f, 0.2f, 0.8f, 1.0f)}, // สีม่วง
+			{"Homework",        ImVec4(1.0f, 0.6f, 0.2f, 1.0f)}  // สีส้ม
+		};
 
+		if (createnewcategory)
+		{
+			ImGui::OpenPopup("Category Color Picker");
+			createnewcategory = false;
+		}
+
+		if (saved_palette_init) {
+			for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++) {
+				ImGui::ColorConvertHSVtoRGB(n / 31.0f, 0.8f, 0.8f,
+					saved_palette[n].x, saved_palette[n].y, saved_palette[n].z);
+				saved_palette[n].w = 1.0f;
+			}
+			saved_palette_init = false;
+		}
+
+		//Popup if trigger
+		if (ImGui::BeginPopupModal("Category Color Picker", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			static char new_category[256] = "";
+			ImGui::Text("Pick a color for your new category :");
+			ImGui::InputText("##", new_category, sizeof(new_category));
+			ImGui::Separator();
+
+			// The main picker
+			ImGui::ColorPicker4("##picker", (float*)&color, base_flags | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
+			ImGui::SameLine();
+
+			// The right side panel
+			ImGui::BeginGroup();
+			ImGui::Text("Current");
+			ImGui::ColorButton("##current", color, ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_AlphaPreviewHalf, ImVec2(60, 40));
+
+			ImGui::Separator();
+			ImGui::Text("Palette");
+			for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++)
+			{
+				ImGui::PushID(n);
+				if ((n % 8) != 0) ImGui::SameLine(0.0f, ImGui::GetStyle().ItemSpacing.y);
+
+				ImGuiColorEditFlags palette_button_flags = ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip;
+				if (ImGui::ColorButton("##palette", saved_palette[n], palette_button_flags, ImVec2(20, 20)))
+					color = ImVec4(saved_palette[n].x, saved_palette[n].y, saved_palette[n].z, color.w);
+
+				if (ImGui::BeginDragDropTarget()) {
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_3F))
+						memcpy((float*)&saved_palette[n], payload->Data, sizeof(float) * 3);
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_4F))
+						memcpy((float*)&saved_palette[n], payload->Data, sizeof(float) * 4);
+					ImGui::EndDragDropTarget();
+				}
+				ImGui::PopID();
+			}
+			ImGui::EndGroup();
+
+			ImGui::Separator();
+
+			// --- NEW RIGHT-ALIGNMENT MATH ---
+			float button_width = 120.0f;
+			float spacing = ImGui::GetStyle().ItemSpacing.x;
+			float total_buttons_width = (button_width * 2.0f) + spacing;
+
+			// Calculate where the cursor needs to start to fit exactly on the right edge
+			float right_align_x = ImGui::GetWindowWidth() - total_buttons_width - ImGui::GetStyle().WindowPadding.x;
+
+			// Move the cursor to that position before drawing the first button
+			ImGui::SetCursorPosX(right_align_x);
+
+			// 4. Buttons to confirm or cancel the popup
+			if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::SetItemDefaultFocus();
+			ImGui::SameLine();
+			if (ImGui::Button("Save Color", ImVec2(120, 0))) {
+				if (strlen(new_category) > 0) {
+
+					EventCategory new_cat;
+					new_cat.name = new_category;
+					new_cat.color = color;
+					my_categories.push_back(new_cat);
+
+					//Clear the text box so it's empty next time the popup opens
+					memset(new_category, 0, sizeof(new_category));
+
+					//cgui::SaveCategories();
+				}
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
+		}
 	}
 
 	void UpcomingEvent()
 	{
-		ImGui::Begin("Upcoming Event", NULL, ImGuiWindowFlags_NoCollapse);
+		ImGuiWindowClass window_class;
+		window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
+		ImGui::SetNextWindowClass(&window_class);
+
+		ImGui::Begin("Upcoming Event", NULL, ImGuiDockNodeFlags_NoTabBar);
+		ImGui::SetWindowFontScale(1.25f);
 		int n_events = 5;
 		ImFont* Title = ImGui::GetIO().Fonts->Fonts[1];
 		ImGui::PushFont(Title);
