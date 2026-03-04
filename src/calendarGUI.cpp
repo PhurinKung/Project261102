@@ -20,6 +20,7 @@ namespace cgui
 	void thisistest();
 	void UpcomingEvent();
 	void NewEvent();
+	void SearchEvent();
 	
 
 	void DrawCustomWindow();
@@ -61,6 +62,7 @@ namespace cgui
 		//DrawCustomWindow();
 		UpcomingEvent();
 		NewEvent();
+		SearchEvent();
 	}
 
 	void DrawCustomWindow() {
@@ -459,7 +461,7 @@ namespace cgui
 		if (isNewEventOpen) {
 
 			ImVec2 screenSize = ImGui::GetIO().DisplaySize;
-			ImVec2 targetSize(screenSize.x * 0.5f, screenSize.y * 0.6f);
+			ImVec2 targetSize(screenSize.x * 0.45f, screenSize.y * 0.45f);
 			ImGui::SetNextWindowSize(targetSize, ImGuiCond_Always);
 
 			ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
@@ -483,7 +485,7 @@ namespace cgui
 			ImGui::SetNextItemWidth(150.0f);
 			static int selectedItem = 0;
 			const char* items[] = { "Work", "Personal", "Business", "Others" };
-			ImGui::Combo("###Select Fruit", &selectedItem, items, IM_ARRAYSIZE(items));
+			ImGui::Combo("##Select categories", &selectedItem, items, IM_ARRAYSIZE(items));
 
 			/*-------------------------select date and time-----------------------------*/
 			//start
@@ -625,13 +627,12 @@ namespace cgui
 				ImGui::EndCombo();
 			}
 			
-
 			/*------------------------------------------------------------------*/
 
 			/*------------------------details---------------------------*/
 			static char detail[1024] = "";
 			ImVec2 boxSize(-20.0f, 150.0f);
-			ImGui::InputTextMultiline("##Detail", detail, sizeof(detail), boxSize);
+			ImGui::InputTextMultiline("##Detail", detail, sizeof(detail), boxSize, ImGuiInputTextFlags_WordWrap);
 			/*----------------------------------------------------------*/
 
 			//save button
@@ -654,6 +655,15 @@ namespace cgui
 			ImGui::End();
 			ImGui::PopStyleColor();
 		}
+	}
+
+	//search
+	void SearchEvent() {
+		ImGui::Begin("Search Event", NULL, ImGuiWindowFlags_NoCollapse);
+
+		ImGui::Text("Search Events");
+
+		ImGui::End();
 	}
 
 	void UpcomingEvent()
@@ -687,7 +697,9 @@ namespace cgui
 
 		ImGui::SetCursorPos(ImVec2(targetX, targetY));
 
-		ImGui::Button("search", buttonSize);
+		if (ImGui::Button("search", buttonSize)) {
+			//isSearchEventOpen = true;
+		}
 		ImGui::SameLine(0.0f, 15.0f);
 		ImGui::PushFont(Title);
 		if (ImGui::Button("+", buttonSize)) {
