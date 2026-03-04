@@ -184,7 +184,7 @@ namespace cgui
 
 		//get current date for month and year as a default opening kub
 		std::time_t currentTime = std::time(nullptr);
-		auto [current_day, current_month, current_year, current_hour, current_minute] = timeToDMY(currentTime);
+		auto [current_day, current_month, current_year, current_hour, current_minute] = Utils::timeToDMY(currentTime);
 		static int ThisYear = current_year; 
 		static int ThisMonth = current_month;
 
@@ -627,13 +627,6 @@ namespace cgui
 		ImGuiColorEditFlags base_flags = ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_AlphaPreviewHalf |
 				ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_DisplayHSV |
 				ImGuiColorEditFlags_DisplayHex;
-		//test category
-		static std::vector<EventCategory> my_categories = {
-			{"CTF Competition", ImVec4(1.0f, 0.3f, 0.3f, 1.0f)}, // สีแดง
-			{"C++ Project",     ImVec4(0.2f, 0.6f, 1.0f, 1.0f)}, // สีฟ้า
-			{"Game Dev",        ImVec4(0.6f, 0.2f, 0.8f, 1.0f)}, // สีม่วง
-			{"Homework",        ImVec4(1.0f, 0.6f, 0.2f, 1.0f)}  // สีส้ม
-		};
 
 		if (createnewcategory)
 		{
@@ -724,7 +717,7 @@ namespace cgui
 
 					// 3. Clear the text box so it's empty next time the popup opens
 					memset(new_category, 0, sizeof(new_category));
-					my_categories.push_back(new_cat);
+					myCalendar.addCategory(new_cat);
 
 					//Clear the text box so it's empty next time the popup opens
 					memset(new_category, 0, sizeof(new_category));
@@ -738,7 +731,6 @@ namespace cgui
 
 	void UpcomingEvent()
 	{
-		ImGui::Begin("Upcoming Event", NULL, ImGuiWindowFlags_NoCollapse);
 		int n_events = 5;
 		ImFont* Title = ImGui::GetIO().Fonts->Fonts[2];
 		ImGuiWindowClass window_class;
@@ -748,7 +740,6 @@ namespace cgui
 		ImGui::Begin("Upcoming Event", NULL, ImGuiDockNodeFlags_NoTabBar);
 		ImGui::SetWindowFontScale(1.25f);
 		std::vector<Event> upcoming_events = myCalendar.getUpcomingEvents(5);
-		ImFont* Title = ImGui::GetIO().Fonts->Fonts[1];
 		ImGui::PushFont(Title);
 		ImGui::Text("Upcoming Events");
 		ImGui::PopFont();
@@ -763,8 +754,8 @@ namespace cgui
 				const char* event_name = "jdkas";
 				if (ImGui::CollapsingHeader(ev.getTitle().c_str())) {
 
-					auto [s_day, s_month, s_year, s_hour, s_min] = timeToDMY(ev.getStartTime());
-					auto [e_day, e_month, e_year, e_hour, e_min] = timeToDMY(ev.getEndTime());
+					auto [s_day, s_month, s_year, s_hour, s_min] = Utils::timeToDMY(ev.getStartTime());
+					auto [e_day, e_month, e_year, e_hour, e_min] = Utils::timeToDMY(ev.getEndTime());
 
 					ImGui::Text("Date: %02d/%02d/%d", s_day, s_month, s_year);
 
