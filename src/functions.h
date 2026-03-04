@@ -15,6 +15,36 @@
 
 using namespace std;
 
+tuple<int, int, int, int, int> timeToDMY(time_t tme) { // day month year hour minute
+	tm* local_time = localtime(&tme);
+
+	if (local_time == nullptr) {
+		return make_tuple(0, 0, 0, 0, 0); // หรือ throw exception อื่น ๆ 
+	}
+
+	int day = local_time->tm_mday;       // (1 - 31)
+	int month = local_time->tm_mon + 1;  // (0 - 11) -> +1 = 1 - 12 
+	int year = local_time->tm_year + 1900; // start from 1900 -> +1900 get current year
+	int hour = local_time->tm_hour;
+	int minute = local_time->tm_min;
+
+	return make_tuple(day, month, year, hour, minute);
+}
+
+time_t DMYtoTime(int day, int month, int year, int hour = 0, int minute = 0) {
+	tm time_info = { 0 };
+
+	time_info.tm_mday = day;
+	time_info.tm_mon = month - 1;
+	time_info.tm_year = year - 1900;
+	time_info.tm_hour = hour;
+	time_info.tm_min = minute;
+
+	time_info.tm_isdst = -1;
+
+	return mktime(&time_info);
+}
+
 enum class typeEvent {
     Work,
     Personal,
@@ -174,10 +204,20 @@ const vector<Event>& CalendarManager::getAllEvents() const {
 
 vector<Event> CalendarManager::getEventsByDate(int day, int month, int year) {
     //todo : getallEvent on Date
-    //maybe using lowerbound
+	vector<Event> eventsOnDate;
+
+	time_t startofthisdate = DMYtoTime(day, month, year, 0, 0);
+	time_t endofthisdate = DMYtoTime(day, month, year, 23, 59);
+
+	for (const auto& i : allEvents) {
+		if (i.getEndTime() >= startofthisdate && i.getStartTime() <= endofthisdate)
+			eventsOnDate.push_back(i);
+	}
+
+	return eventsOnDate;
 }
 
-bool findthisword(string keyword,string source) {
+bool findthisword(string keyword, string source) {
     transform(source.begin(), source.end(), source.begin(), ::tolower);
     return (source.find(keyword) != string::npos);
 }
