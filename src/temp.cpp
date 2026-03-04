@@ -3,32 +3,59 @@
 int main() {
 	CalendarManager MyCalendar;
 
-	int day, month, year;
-	cout << "input 1st Event date [d/m/yyyy]: ";
-	cin >> day >> month >> year;
+	MyCalendar.loadFromFile();
 
-	Event newEvent("Comprog Exam", DMYtoTime(day, month, year), DMYtoTime(day, month, year), "University", "Don't for get to read", "CMU");
-	
-	bool status; string ErrorMSG;
-
-	tie(status, ErrorMSG) = MyCalendar.addEvent(newEvent);
-
-	if (status) cout << "Added newEvent (1) !\n";
-	else cout << "Can't Add new event TT [ErrorMSG]: " << ErrorMSG << "\n";
-
-	cout << "input 2nd Event date [d/m/yyyy]: ";
-	cin >> day >> month >> year;
-
-	Event newEvent2("Eng Exam", DMYtoTime(day, month, year), DMYtoTime(day-1, month, year), "University", "Don't for get to read", "CMU");
-
-	tie(status, ErrorMSG) = MyCalendar.addEvent(newEvent2);
-
-	if (status) cout << "Added newEvent (2) !\n";
-	else cout << "Can't Add new event TT [ErrorMSG]: " << ErrorMSG << "\n";
-
+	std::cout << "Loaded File! there are " << MyCalendar.getAllEvents().size() << " data\n";
 	for (auto i : MyCalendar.getAllEvents()) {
-		cout << i.getTitle() << "\n";
+		std::cout << i.getTitle() << "\n";
 	}
 
+	int i = 1; char op;
+	while (1) {
+		std::cout << "Do you want to add new Event? [Y/N]: ";
+		std::cin >> op;
+		
+		if (op == 'N') break;
+		
+		std::string title, category, place, detail;
+		int day, month, year;
+
+		std::cout << "Title ? ";
+		std::cin >> title;
+		
+		std::cout << "Start time [dd mm yyyy] ? ";
+		std::cin >> day >> month >> year;
+
+		time_t startTime = DMYtoTime(day, month, year);
+
+		std::cout << "End time [dd mm yyyy] ? ";
+		std::cin >> day >> month >> year;
+
+		time_t EndTime = DMYtoTime(day, month, year);
+
+		std::cout << "category ? ";
+		std::cin >> category;
+
+		std::cout << "place ? ";
+		std::cin >> place;
+
+		std::cout << "detail ? ";
+		getline(std::cin, detail);
+
+		Event newEvent(title, startTime, EndTime, category, detail, place);
+		
+		bool status;
+		std::string MSG;
+
+		std::tie(status,MSG) = MyCalendar.addEvent(newEvent);
+		
+		std::cout << "Event[" << i << "] status : " << MSG;
+
+		++i;
+	}
+
+	MyCalendar.saveToFile();
+	std::cout << "Saved data!";
+	return 0;
 }
 
