@@ -12,9 +12,11 @@ namespace cgui
 	static int selected_month = -1;
 	static int selected_day = -1; // -1 means no day is selected yet
 	static bool editing = false;
+	bool confirmDelete = false;
 	static bool createnewcategory = false;
 	static CalendarManager myCalendar;
 	static Event current_editing_event;
+	Event event_to_delete;
 
 	int FirstDayOfMonth(int, int);
 	int HowManyDaysInThisMonth(int, int);
@@ -26,6 +28,7 @@ namespace cgui
 	void CreateNewCategory();
 	void showevent();
 	void EditEvent();
+	void ConfirmDelete();
 
 	void ThewholecalendarGUI() 
 	{
@@ -64,6 +67,7 @@ namespace cgui
 		SearchEvent();
 		CreateNewCategory();
 		EditEvent();
+		ConfirmDelete();
 	}
 	void showevent() {
 		// 1. Create a window class to override the docking behavior
@@ -119,7 +123,8 @@ namespace cgui
 							}
 							ImGui::SameLine(0.0f, 20.0f);
 							if (ImGui::Button("delete", buttonSize_2)) {
-								
+								confirmDelete = true;
+								event_to_delete = ev;
 							}
 							ImGui::EndTabItem();
 						}
@@ -137,6 +142,13 @@ namespace cgui
 			// What it shows when they first open the app and haven't clicked a day
 			ImGui::TextDisabled("Select a day on the calendar to view events.");
 		}
+
+		if (confirmDelete) {
+			ImGui::OpenPopup("ConfirmDelete");
+		}
+
+		ConfirmDelete();
+
 		ImGui::End();
 	}
 
@@ -271,6 +283,54 @@ namespace cgui
 
 			ImGui::EndPopup();
 		}
+	}
+
+	void ConfirmDelete() {
+		ImVec2 screenSize = ImGui::GetIO().DisplaySize;
+		ImVec2 targetSize(screenSize.x * 0.3f, screenSize.y * 0.2f);
+
+		ImGui::SetNextWindowSize(targetSize, ImGuiCond_Always);
+		ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
+
+		if (ImGui::BeginPopupModal("ConfirmDelete", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar)){
+			
+			ImFont* Title = ImGui::GetIO().Fonts->Fonts[2];
+			ImGui::PushFont(Title);
+			ImGui::Text("Confirm Delete");
+			ImGui::PopFont();
+
+			ImGui::Separator();
+
+			ImGui::Text("Are you sure you want to delete this event?");
+			
+			ImGui::Separator();
+			
+			ImVec2 buttonSize(80.0f, 25.0f);
+
+			float WindowWidth = ImGui::GetWindowWidth();
+			float WindowHeight = ImGui::GetWindowHeight();
+
+			float targetX = WindowWidth - (2 * buttonSize.x) - 20.0f - 10.0f;
+			float targetY = WindowHeight - buttonSize.y - 20.0f;
+
+			ImGui::SetCursorPos(ImVec2(targetX, targetY));
+			
+			if (ImGui::Button("Confirm", buttonSize)) {
+				//delete here
+				confirmDelete = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::SameLine(0.0f, 10.0f);
+
+			if (ImGui::Button("Cancle", buttonSize)) {
+				confirmDelete = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
+		ImGui::PopStyleColor();
 	}
 
 	void thisistest(){
