@@ -770,7 +770,6 @@ namespace cgui
 				const Event& ev = upcoming_events[i];
 				ImGui::PushID(ev.getID());
 
-				// 1. คำนวณหาสถานะ (In progress หรือ in X days)
 				time_t now = time(nullptr);
 				std::string status_text = "";
 
@@ -806,11 +805,15 @@ namespace cgui
 						s_day, s_month, s_year, s_hour, s_min,
 						e_day, e_month, e_year, e_hour, e_min);
 
+					ImGui::SeparatorText("Category");
+					ImGui::Text("%s", ev.getCategory().c_str());
+
 					ImGui::SeparatorText("Location");
 					ImGui::Text("%s", ev.getPlaces().c_str());
 
 					ImGui::SeparatorText("Details");
 					ImGui::TextWrapped("%s", ev.getDetails().c_str());
+					ImGui::TextWrapped("");
 				}
 
 				ImGui::PopID();
