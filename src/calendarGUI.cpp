@@ -402,15 +402,17 @@ namespace cgui
 		ImGui::Begin("Calendar", NULL, ImGuiWindowFlags_NoTitleBar);
 
 		//get current date for month and year as a default opening kub
-		std::time_t currentTime = std::time(nullptr);
-		auto [current_day, current_month, current_year, current_hour, current_minute] = Utils::timeToDMY(currentTime);
-		static int ThisYear = current_year; 
-		static int ThisMonth = current_month;
+		if (selected_year == -1 || selected_month == -1) {
+			std::time_t currentTime = std::time(nullptr);
+			auto [current_day, current_month, current_year, current_hour, current_minute] = Utils::timeToDMY(currentTime);
+			selected_year = current_year;
+			selected_month = current_month;
+		}
 
 		const char* month_names[] = { "January", "February", "March", "April", "May", "June",
 										 "July", "August", "September", "October", "November", "December" };
 
-		std::string header_text = std::string(month_names[ThisMonth - 1]) + " " + std::to_string(ThisYear);
+		std::string header_text = std::string(month_names[selected_month - 1]) + " " + std::to_string(selected_year);
 		ImGui::SetWindowFontScale(2.0f);
 		ImGui::Text( "%s", header_text.c_str());
 		ImGui::SetWindowFontScale(1.0f); // คืนค่าขนาดตัวอักษรกลับเป็นปกติ
@@ -436,18 +438,18 @@ namespace cgui
 		
 		// > <
 		if (ImGui::ArrowButton("##left", ImGuiDir_Left)) { 
-			ThisMonth--;
-			if (ThisMonth < 1) {
-				ThisMonth = 12;
-				ThisYear--;
+			selected_month--;
+			if (selected_month < 1) {
+				selected_month = 12;
+				selected_year--;
 			}
 		}
 		ImGui::SameLine(0.0f, spacing);
 		if (ImGui::ArrowButton("##right", ImGuiDir_Right)) { 
-			ThisMonth++;
-			if (ThisMonth > 12) {
-				ThisMonth = 1;
-				ThisYear++;
+			selected_month++;
+			if (selected_month > 12) {
+				selected_month = 1;
+				selected_year++;
 			}
 		}
 
@@ -473,8 +475,8 @@ namespace cgui
 			}
 
 			//days of month
-			int DayOne = FirstDayOfMonth(ThisYear, ThisMonth); //position of the first day of the month
-			int AllDay = HowManyDaysInThisMonth(ThisYear, ThisMonth);
+			int DayOne = FirstDayOfMonth(selected_year, selected_month); //position of the first day of the month
+			int AllDay = HowManyDaysInThisMonth(selected_year, selected_month);
 
 			int nday = 1;
 			for (int i = 0; i < 6; i++) {
@@ -491,7 +493,7 @@ namespace cgui
 						float cell_h = 100.0f;
 						ImVec2 cursor_pos = ImGui::GetCursorScreenPos(); // top right coordinate of the box
 						
-						bool is_selected = (selected_day == nday && selected_month == ThisMonth && selected_year == ThisYear);
+						bool is_selected = (selected_day == nday && selected_month == selected_month && selected_year == selected_year);
 
 						if (ImGui::Selectable("##day", is_selected, 0, ImVec2(cell_w, cell_h))) {
 							if (is_selected) {
@@ -501,8 +503,6 @@ namespace cgui
 							else {
 								// if didnt select this then select this
 								selected_day = nday;
-								selected_month = ThisMonth;
-								selected_year = ThisYear;
 							}
 						}
 
@@ -516,7 +516,7 @@ namespace cgui
 						draw_list->AddText(text_pos, ImGui::GetColorU32(ImGuiCol_Text), day_str.c_str());
 						
 						// fill event dots if there are any
-						std::vector<Event> events_today = myCalendar.getEventsByDate(nday, ThisMonth, ThisYear);
+						std::vector<Event> events_today = myCalendar.getEventsByDate(nday, selected_month, selected_year);
 						int num_events = events_today.size();
 
 						auto category_color = myCalendar.getColorCategory();
