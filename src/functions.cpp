@@ -93,8 +93,6 @@ void CalendarManager::loadFromFile() {
 		nextID = MAXID + 1;
 		this->sortEvents();
 	}
-	
-	//todo : load category files
 
 	std::ifstream catsrc(categories_data_filename);
 	if (catsrc.is_open()) {
@@ -238,7 +236,6 @@ const std::vector<Event>& CalendarManager::getAllEvents() const {
 }
 
 std::vector<Event> CalendarManager::getEventsByDate(int day, int month, int year) {
-	//todo : getallEvent on Date
 	std::vector<Event> eventsOnDate;
 
 	time_t startofthisdate = Utils::DMYtoTime(day, month, year, 0, 0);
@@ -283,10 +280,13 @@ std::vector<Event> CalendarManager::searchEvents(std::string keyword) {
 std::vector<Event> CalendarManager::getUpcomingEvents(int N) {
 	std::vector<Event> upcoming;
 
-	//todo : check every event and compare with time_t 
 	time_t now = time(nullptr);
 
 	for (const auto& i : allEvents) {
+<<<<<<< HEAD
+=======
+
+>>>>>>> ee78839e2e21c503d6f052dcbc570d1325789de1
 		if (i.getEndTime() >= now)
 			upcoming.push_back(i);
 

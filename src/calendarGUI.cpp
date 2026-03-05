@@ -14,9 +14,11 @@ namespace cgui
 	static bool editing = false;
 	bool confirmDelete = false;
 	static bool createnewcategory = false;
+	static bool confirmdelete = false;
 	static CalendarManager myCalendar;
 	static Event current_editing_event;
 	Event event_to_delete;
+	static Event current_editing_event, current_deleting_event;
 
 	int FirstDayOfMonth(int, int);
 	int HowManyDaysInThisMonth(int, int);
@@ -29,6 +31,7 @@ namespace cgui
 	void showevent();
 	void EditEvent();
 	void ConfirmDelete();
+	void DeleteEvent();
 
 	void ThewholecalendarGUI() 
 	{
@@ -68,6 +71,7 @@ namespace cgui
 		CreateNewCategory();
 		EditEvent();
 		ConfirmDelete();
+		DeleteEvent();
 	}
 	void showevent() {
 		// 1. Create a window class to override the docking behavior
@@ -195,7 +199,7 @@ namespace cgui
 
 			// --- TITLE ---
 			ImGui::SetWindowFontScale(1.25f);
-			ImGui::PushItemWidth(380.0f);
+			ImGui::PushItemWidth(-1.0f);
 			ImGui::InputText("##EditTitle", edit_title, sizeof(edit_title));
 			ImGui::PopItemWidth();
 			ImGui::Separator();
@@ -252,7 +256,7 @@ namespace cgui
 
 			// --- DETAILS ---
 			ImGui::SeparatorText("Details");
-			ImGui::InputTextMultiline("##EditDet", edit_details, sizeof(edit_details), ImVec2(380.0f, 120.0f), ImGuiInputTextFlags_WordWrap);
+			ImGui::InputTextMultiline("##EditDet", edit_details, sizeof(edit_details), ImVec2(-1.0f, 140.0f), ImGuiInputTextFlags_WordWrap);
 
 			ImGui::Dummy(ImVec2(0.0f, 10.0f));
 
@@ -331,6 +335,13 @@ namespace cgui
 			ImGui::EndPopup();
 		}
 		ImGui::PopStyleColor();
+	}
+
+	void DeleteEvent() {
+		if (confirmdelete) {
+			myCalendar.deleteEvent(current_deleting_event.getID());
+			confirmdelete = false;
+		}
 	}
 
 	void thisistest(){
@@ -491,12 +502,19 @@ namespace cgui
 						float cell_h = 100.0f;
 						ImVec2 cursor_pos = ImGui::GetCursorScreenPos(); // top right coordinate of the box
 						
-						//selectable boxes
-						bool is_selected = (selected_day == nday);
+						bool is_selected = (selected_day == nday && selected_month == ThisMonth && selected_year == ThisYear);
+
 						if (ImGui::Selectable("##day", is_selected, 0, ImVec2(cell_w, cell_h))) {
-							selected_day = nday;
-							selected_month = ThisMonth;
-							selected_year = ThisYear;
+							if (is_selected) {
+								// if selected then deselect
+								selected_day = -1;
+							}
+							else {
+								// if didnt select this then select this
+								selected_day = nday;
+								selected_month = ThisMonth;
+								selected_year = ThisYear;
+							}
 						}
 
 						//fill numbers
@@ -999,7 +1017,6 @@ namespace cgui
 				const Event& ev = upcoming_events[i];
 				ImGui::PushID(ev.getID());
 
-				// 1. คำนวณหาสถานะ (In progress หรือ in X days)
 				time_t now = time(nullptr);
 				std::string status_text = "";
 
@@ -1020,6 +1037,16 @@ namespace cgui
 
 				bool is_open = ImGui::CollapsingHeader(ev.getTitle().c_str());
 
+				//if the last drawing was clicked
+				if (ImGui::IsItemClicked()) {
+					auto [s_day, s_month, s_year, s_hour, s_min] = Utils::timeToDMY(ev.getStartTime());
+
+					// Update the globally selected date to the calendar and showevent
+					selected_day = s_day;
+					selected_month = s_month;
+					selected_year = s_year;
+				}
+
 				float window_width = ImGui::GetWindowContentRegionMax().x;
 				float text_width = ImGui::CalcTextSize(status_text.c_str()).x;
 
@@ -1030,16 +1057,21 @@ namespace cgui
 					auto [s_day, s_month, s_year, s_hour, s_min] = Utils::timeToDMY(ev.getStartTime());
 					auto [e_day, e_month, e_year, e_hour, e_min] = Utils::timeToDMY(ev.getEndTime());
 
+
 					ImGui::SeparatorText("Time");
 					ImGui::Text("%02d/%02d/%d (%02d:%02d) - %02d/%02d/%d (%02d:%02d)",
 						s_day, s_month, s_year, s_hour, s_min,
 						e_day, e_month, e_year, e_hour, e_min);
+
+					ImGui::SeparatorText("Category");
+					ImGui::Text("%s", ev.getCategory().c_str());
 
 					ImGui::SeparatorText("Location");
 					ImGui::Text("%s", ev.getPlaces().c_str());
 
 					ImGui::SeparatorText("Details");
 					ImGui::TextWrapped("%s", ev.getDetails().c_str());
+					ImGui::TextWrapped("");
 				}
 
 				ImGui::PopID();
