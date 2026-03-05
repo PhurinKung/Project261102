@@ -2,4 +2,5 @@ EXAM2|1773594000|1773594000|Study|Don't for get to read|CMU|2
 EXAM1|1774026000|1774026000|Study|Don't for get to read|CMU|1
 ads|1774976400|1774998000|Work|asdf|asd|4
 April fool's Day|1774976400|1775062740|Others|don lok|CMU|3
+Oreo's Day|1775322000|1775408340|Business|ooooooooooooooooreoooooooooooooo|CMU|6
 Songkran|1776013200|1776272340|Personal|songkran|Nimman|5
