@@ -53,6 +53,8 @@ public:
 	std::string getPlaces() const { return places; }
 	unsigned long long getID() const { return id; }
 
+	void changeTitle(std::string newCat) { category = newCat; }
+
 	// compare func for sort
 	// sort by start date, end date, id
 	bool operator<(const Event& a) const {
@@ -113,6 +115,7 @@ public:
 	std::pair<bool, std::string> editEvent(unsigned long long eventId, Event updatedEvent); // return status and error message
 
 	std::pair<bool, std::string> addCategory(EventCategory newCategory);
+	std::pair<bool, std::string> deleteCategory(std::string sadCategory);
 
 	// Find & Search
 	const std::vector<Event>& getAllEvents() const; // ใช้ const& ไม่ให้ copy ข้อมูล เปลืองแรม
