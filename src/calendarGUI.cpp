@@ -630,7 +630,7 @@ namespace cgui
 			//categories
 			ImGui::SetNextItemWidth(150.0f);
 			static int selectedItem = 0;
-			const char* items[] = { "Work", "Personal", "Business", "Others" };
+			const char* items[] = { "Work", "Personal", "Business", "+ Add new" };
 			if (ImGui::Combo("##Select categories", &selectedItem, items, IM_ARRAYSIZE(items))) {
 				if (selectedItem == 3) {
 					createnewcategory = true;
@@ -659,19 +659,37 @@ namespace cgui
 			ImGui::SetNextItemWidth(75.0f);
 			ImGui::Combo("##Select Month", &startmonth, Month, IM_ARRAYSIZE(Month));
 			
-			//std::map<int, std::string> MON = {
-			//	{0, "JAN"},{1, "FEB"},{2, "MAR"},{3, "APR"},{4, "MAY"},{5, "JUN"},
-			//	{6, "JUL"},{7, "AUG"},{8, "SEP"},{9, "OCT"},{10, "NOV"},{11, "DEC"}
-			//};
 
 			ImGui::SameLine();
 
+			//const char* Year[] = {
+			//	"2026", "2027", "2028", "2029", "2030", "2031","2032", "2033", "2034", "2035", "2036"
+			//};
+			//ImGui::SetNextItemWidth(75.0f);
+			//ImGui::Combo("##Select Year", &startyear, Year, IM_ARRAYSIZE(Year));
 			static int startyear = 0;
-			const char* Year[] = {
-				"2026", "2027", "2028", "2029", "2030", "2031","2032", "2033", "2034", "2035", "2036"
-			};
+			if (startyear == 0) {
+				startyear = selected_year;
+			}
+
+			char yearPreview[8];
+			snprintf(yearPreview, sizeof(yearPreview), "%d", startyear);
+
 			ImGui::SetNextItemWidth(75.0f);
-			ImGui::Combo("##Select Year", &startyear, Year, IM_ARRAYSIZE(Year));
+			if (ImGui::BeginCombo("##StartYear", yearPreview)) {
+				for (int y = selected_year; y < selected_year + 10; y++) {
+					char buf[8];
+					snprintf(buf, sizeof(buf), "%d", y);
+
+					bool isSelected = (startyear == y);
+					if (ImGui::Selectable(buf, isSelected)) {
+						startyear = y;
+					}
+					if (isSelected) ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			
 			ImGui::SameLine(0.0f, 30.0f);
 
 			//start time
@@ -734,8 +752,29 @@ namespace cgui
 			ImGui::SameLine();
 
 			ImGui::SetNextItemWidth(75.0f);
-			static int endYear = 0;
-			ImGui::Combo("##Select endYear", &endYear, Year, IM_ARRAYSIZE(Year));
+			static int endyear = 0;
+			if (endyear == 0) {
+				endyear = selected_year;
+			}
+
+			char yearEndPreview[8];
+			snprintf(yearEndPreview, sizeof(yearEndPreview), "%d", endyear);
+
+			ImGui::SetNextItemWidth(75.0f);
+			if (ImGui::BeginCombo("##EndYear", yearEndPreview)) {
+				for (int y = selected_year; y < selected_year + 10; y++) {
+					char buf[8];
+					snprintf(buf, sizeof(buf), "%d", y);
+
+					bool isSelected = (endyear == y);
+					if (ImGui::Selectable(buf, isSelected)) {
+						endyear = y;
+					}
+					if (isSelected) ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+
 			ImGui::SameLine(0.0f, 30.0f);
 
 			//end time
@@ -802,8 +841,8 @@ namespace cgui
 			if (ImGui::Button("save", buttonSize)) {
 				// This is where you trigger your logic!
 
-				time_t st_timeinfo = Utils::DMYtoTime(atoi(Date[startdate]), startmonth+1, atoi(Year[startyear]), startHour, startMin);
-				time_t end_timeinfo = Utils::DMYtoTime(atoi(Date[enddate]), endMonth+1, atoi(Year[endYear]), endHour, endMin);
+				time_t st_timeinfo = Utils::DMYtoTime(atoi(Date[startdate]), startmonth+1, startyear, startHour, startMin);
+				time_t end_timeinfo = Utils::DMYtoTime(atoi(Date[enddate]), endMonth+1, endyear, endHour, endMin);
 
 				Event newEvent(event_name, st_timeinfo, end_timeinfo, items[selectedItem], detail, location);
 				myCalendar.addEvent(newEvent);
@@ -818,7 +857,7 @@ namespace cgui
 				startdate = 0; startmonth = 0; startyear = 0;
 				startHour = 0; startMin = 0;
 
-				enddate = 0; endMonth = 0; endYear = 0;
+				enddate = 0; endMonth = 0; endyear = 0;
 				endHour = 0; endMin = 0;
 
 				// Clear the text box after saving (optional)
