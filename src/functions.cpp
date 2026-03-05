@@ -283,10 +283,6 @@ std::vector<Event> CalendarManager::getUpcomingEvents(int N) {
 	time_t now = time(nullptr);
 
 	for (const auto& i : allEvents) {
-<<<<<<< HEAD
-=======
-
->>>>>>> ee78839e2e21c503d6f052dcbc570d1325789de1
 		if (i.getEndTime() >= now)
 			upcoming.push_back(i);
 

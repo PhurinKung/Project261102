@@ -16,7 +16,6 @@ namespace cgui
 	static bool createnewcategory = false;
 	static bool confirmdelete = false;
 	static CalendarManager myCalendar;
-	static Event current_editing_event;
 	Event event_to_delete;
 	static Event current_editing_event, current_deleting_event;
 
@@ -129,6 +128,7 @@ namespace cgui
 							if (ImGui::Button("delete", buttonSize_2)) {
 								confirmDelete = true;
 								event_to_delete = ev;
+								DeleteEvent();
 							}
 							ImGui::EndTabItem();
 						}
