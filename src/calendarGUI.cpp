@@ -16,22 +16,19 @@ namespace cgui
 	static bool createnewcategory = false;
 	static bool confirmdelete = false;
 	static CalendarManager myCalendar;
-	static Event current_editing_event;
-	Event event_to_delete;
 	static Event current_editing_event, current_deleting_event;
 
 	int FirstDayOfMonth(int, int);
 	int HowManyDaysInThisMonth(int, int);
-	void DrawCalendarV2();
+	void DrawMainCalendar();
 	void thisistest();
 	void UpcomingEvent();
 	void NewEvent();
 	void SearchEvent();
 	void CreateNewCategory();
-	void showevent();
+	void ShowEvent();
 	void EditEvent();
 	void ConfirmDelete();
-	void DeleteEvent();
 
 	void ThewholecalendarGUI() 
 	{
@@ -63,17 +60,16 @@ namespace cgui
 		}
 
 		ImGui::DockSpaceOverViewport(dockspace_id, ImGui::GetMainViewport());
-		DrawCalendarV2();
-		showevent();
+		DrawMainCalendar();
+		ShowEvent();
 		UpcomingEvent();
 		NewEvent();
 		SearchEvent();
 		CreateNewCategory();
 		EditEvent();
 		ConfirmDelete();
-		DeleteEvent();
 	}
-	void showevent() {
+	void ShowEvent() {
 		// 1. Create a window class to override the docking behavior
 		ImGuiWindowClass window_class;
 		window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
@@ -128,7 +124,7 @@ namespace cgui
 							ImGui::SameLine(0.0f, 20.0f);
 							if (ImGui::Button("delete", buttonSize_2)) {
 								confirmDelete = true;
-								event_to_delete = ev;
+								current_deleting_event = ev;
 							}
 							ImGui::EndTabItem();
 						}
@@ -318,16 +314,16 @@ namespace cgui
 			float targetY = WindowHeight - buttonSize.y - 20.0f;
 
 			ImGui::SetCursorPos(ImVec2(targetX, targetY));
-			
-			if (ImGui::Button("Confirm", buttonSize)) {
-				//delete here
+			if (ImGui::Button("Cancle", buttonSize)) {
 				confirmDelete = false;
 				ImGui::CloseCurrentPopup();
 			}
+			
 
 			ImGui::SameLine(0.0f, 10.0f);
 
-			if (ImGui::Button("Cancle", buttonSize)) {
+			if (ImGui::Button("Confirm", buttonSize)) {
+				myCalendar.deleteEvent(current_deleting_event.getID());
 				confirmDelete = false;
 				ImGui::CloseCurrentPopup();
 			}
@@ -335,13 +331,6 @@ namespace cgui
 			ImGui::EndPopup();
 		}
 		ImGui::PopStyleColor();
-	}
-
-	void DeleteEvent() {
-		if (confirmdelete) {
-			myCalendar.deleteEvent(current_deleting_event.getID());
-			confirmdelete = false;
-		}
 	}
 
 	void thisistest(){
@@ -404,7 +393,7 @@ namespace cgui
 		ImGui::End();
 	}
 
-	void DrawCalendarV2() 
+	void DrawMainCalendar() 
 	{
 		ImGuiWindowClass window_class;
 		window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
