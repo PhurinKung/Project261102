@@ -12,8 +12,9 @@ namespace cgui
 	static int selected_day = -1; // -1 means no day is selected yet
 	static bool editing = false;
 	static bool createnewcategory = false;
+	static bool confirmdelete = false;
 	static CalendarManager myCalendar;
-	static Event current_editing_event;
+	static Event current_editing_event, current_deleting_event;
 
 	int FirstDayOfMonth(int, int);
 	int HowManyDaysInThisMonth(int, int);
@@ -25,6 +26,7 @@ namespace cgui
 	void CreateNewCategory();
 	void showevent();
 	void EditEvent();
+	void DeleteEvent();
 
 	void ThewholecalendarGUI() 
 	{
@@ -63,6 +65,7 @@ namespace cgui
 		SearchEvent();
 		CreateNewCategory();
 		EditEvent();
+		DeleteEvent();
 	}
 	void showevent() {
 		// 1. Create a window class to override the docking behavior
@@ -264,6 +267,13 @@ namespace cgui
 			}
 
 			ImGui::EndPopup();
+		}
+	}
+
+	void DeleteEvent() {
+		if (confirmdelete) {
+			myCalendar.deleteEvent(current_deleting_event.getID());
+			confirmdelete = false;
 		}
 	}
 
@@ -927,6 +937,16 @@ namespace cgui
 
 				bool is_open = ImGui::CollapsingHeader(ev.getTitle().c_str());
 
+				//if the last drawing was clicked
+				if (ImGui::IsItemClicked()) {
+					auto [s_day, s_month, s_year, s_hour, s_min] = Utils::timeToDMY(ev.getStartTime());
+
+					// Update the globally selected date to the calendar and showevent
+					selected_day = s_day;
+					selected_month = s_month;
+					selected_year = s_year;
+				}
+
 				float window_width = ImGui::GetWindowContentRegionMax().x;
 				float text_width = ImGui::CalcTextSize(status_text.c_str()).x;
 
@@ -936,6 +956,7 @@ namespace cgui
 				if (is_open) {
 					auto [s_day, s_month, s_year, s_hour, s_min] = Utils::timeToDMY(ev.getStartTime());
 					auto [e_day, e_month, e_year, e_hour, e_min] = Utils::timeToDMY(ev.getEndTime());
+
 
 					ImGui::SeparatorText("Time");
 					ImGui::Text("%02d/%02d/%d (%02d:%02d) - %02d/%02d/%d (%02d:%02d)",
