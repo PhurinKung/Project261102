@@ -269,7 +269,8 @@ std::vector<Event> CalendarManager::searchEvents(std::string keyword) {
 	for (const auto& i : allEvents) {
 		if (Utils::findthisword(keyword, i.getTitle())
 			|| Utils::findthisword(keyword, i.getCategory())
-			|| Utils::findthisword(keyword, i.getDetails())) {
+			|| Utils::findthisword(keyword, i.getDetails())
+			|| Utils::findthisword(keyword, i.getPlaces())) {
 			KeywordFoundEvents.push_back(i);
 		}
 	}

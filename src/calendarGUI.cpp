@@ -875,7 +875,7 @@ namespace cgui
 	void SearchEvent() {
 
 		ImVec2 screenSize = ImGui::GetIO().DisplaySize;
-		ImVec2 targetSize(screenSize.x * 0.45f, screenSize.y * 0.5f);
+		ImVec2 targetSize(screenSize.x * 0.45f, screenSize.y * 0.6f);
 
 		ImGui::SetNextWindowSize(targetSize, ImGuiCond_Appearing);
 		ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
@@ -895,20 +895,79 @@ namespace cgui
 
 			ImGui::SetCursorPosX(targetX);
 
-			if (ImGui::Button("X", closeButton)){
+			static char searchText[512] = "";
+			static std::vector<Event> search_results;
+			static bool has_searched = false;
+
+			if (ImGui::Button("X", closeButton)) {
+				searchText[0] = '\0';
+				search_results.clear();
+				has_searched = false;
 				ImGui::CloseCurrentPopup();
 			}
 
-			ImGui::SetNextItemWidth(0.8 * ImGui::GetWindowWidth());
-			static char searchText[512] = "";
+			ImGui::SetNextItemWidth(0.75 * ImGui::GetWindowWidth());
 			ImGui::InputTextWithHint("##SearchInput", "Search here...", searchText, IM_ARRAYSIZE(searchText));
 
 			ImGui::SameLine();
-		
-			//ImGui::SetNextItemWidth(0.2 * ImGui::GetWindowWidth());
-			if (ImGui::Button("search")){
 
+			if (ImGui::Button("search")) {
+				// เรียกใช้ฟังก์ชันค้นหาจาก Backend
+				search_results = myCalendar.searchEvents(std::string(searchText));
+				has_searched = true;
 			}
+
+			ImGui::Dummy(ImVec2(0.0f, 10.0f));
+			ImGui::Separator();
+			ImGui::Dummy(ImVec2(0.0f, 5.0f));
+
+			// 2. สร้างกล่องเลื่อนได้ (Child Window) สำหรับแสดงผลลัพธ์
+			// พารามิเตอร์ ImVec2(0, 0) แปลว่า ให้กินพื้นที่ที่เหลือด้านล่างทั้งหมด
+			ImGui::BeginChild("SearchResultsRegion", ImVec2(0, 0), true);
+
+			if (has_searched) {
+				if (search_results.empty()) {
+					ImGui::TextDisabled("No events found matching '%s'", searchText);
+				}
+				else {
+					ImGui::TextDisabled("Found %d events:", (int)search_results.size());
+					ImGui::Dummy(ImVec2(0.0f, 5.0f));
+
+					// 3. วนลูปวาดผลลัพธ์ทีละอัน
+					for (const auto& ev : search_results) {
+						ImGui::PushID(ev.getID()); // ป้องกัน ID ซ้ำ
+
+						std::string display_name = ev.getTitle() + " (" + ev.getCategory() + ")";
+
+						if (ImGui::Selectable(display_name.c_str())) {
+							auto [s_day, s_month, s_year, s_hour, s_min] = Utils::timeToDMY(ev.getStartTime());
+							selected_day = s_day;
+							selected_month = s_month;
+							selected_year = s_year;
+
+							searchText[0] = '\0';
+							search_results.clear();
+							has_searched = false;
+
+							ImGui::CloseCurrentPopup();
+						}
+
+						// draw date and detail
+						auto [d, m, y, h, min] = Utils::timeToDMY(ev.getStartTime());
+						ImGui::TextDisabled("  Date: %02d/%02d/%d", d, m, y);
+						ImGui::TextDisabled("  Detail : %s", ev.getDetails().c_str());
+						ImGui::TextDisabled("  Location : %s", ev.getPlaces().c_str());
+
+						ImGui::Separator();
+						ImGui::PopID();
+					}
+				}
+			}
+			else {
+				ImGui::TextDisabled("Type a keyword and press search.");
+			}
+
+			ImGui::EndChild(); // ปิดกล่องเลื่อนได้
 
 			ImGui::EndPopup();
 		}
