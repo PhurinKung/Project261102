@@ -11,26 +11,28 @@ namespace cgui
 	static int selected_year = -1;
 	static int selected_month = -1;
 	static int selected_day = -1; // -1 means no day is selected yet
+
+	static int ThisYear = -1;
+	static int ThisMonth = -1;
+
 	static bool editing = false;
 	bool confirmDelete = false;
 	static bool createnewcategory = false;
 	static bool confirmdelete = false;
 	static CalendarManager myCalendar;
-	Event event_to_delete;
 	static Event current_editing_event, current_deleting_event;
 
 	int FirstDayOfMonth(int, int);
 	int HowManyDaysInThisMonth(int, int);
-	void DrawCalendarV2();
+	void DrawMainCalendar();
 	void thisistest();
 	void UpcomingEvent();
 	void NewEvent();
 	void SearchEvent();
 	void CreateNewCategory();
-	void showevent();
+	void ShowEvent();
 	void EditEvent();
 	void ConfirmDelete();
-	void DeleteEvent();
 
 	void ThewholecalendarGUI() 
 	{
@@ -62,17 +64,16 @@ namespace cgui
 		}
 
 		ImGui::DockSpaceOverViewport(dockspace_id, ImGui::GetMainViewport());
-		DrawCalendarV2();
-		showevent();
+		DrawMainCalendar();
+		ShowEvent();
 		UpcomingEvent();
 		NewEvent();
 		SearchEvent();
 		CreateNewCategory();
 		EditEvent();
 		ConfirmDelete();
-		DeleteEvent();
 	}
-	void showevent() {
+	void ShowEvent() {
 		// 1. Create a window class to override the docking behavior
 		ImGuiWindowClass window_class;
 		window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
@@ -127,8 +128,7 @@ namespace cgui
 							ImGui::SameLine(0.0f, 20.0f);
 							if (ImGui::Button("delete", buttonSize_2)) {
 								confirmDelete = true;
-								event_to_delete = ev;
-								DeleteEvent();
+								current_deleting_event = ev;
 							}
 							ImGui::EndTabItem();
 						}
@@ -318,16 +318,16 @@ namespace cgui
 			float targetY = WindowHeight - buttonSize.y - 20.0f;
 
 			ImGui::SetCursorPos(ImVec2(targetX, targetY));
-			
-			if (ImGui::Button("Confirm", buttonSize)) {
-				//delete here
+			if (ImGui::Button("Cancle", buttonSize)) {
 				confirmDelete = false;
 				ImGui::CloseCurrentPopup();
 			}
+			
 
 			ImGui::SameLine(0.0f, 10.0f);
 
-			if (ImGui::Button("Cancle", buttonSize)) {
+			if (ImGui::Button("Confirm", buttonSize)) {
+				myCalendar.deleteEvent(current_deleting_event.getID());
 				confirmDelete = false;
 				ImGui::CloseCurrentPopup();
 			}
@@ -335,13 +335,6 @@ namespace cgui
 			ImGui::EndPopup();
 		}
 		ImGui::PopStyleColor();
-	}
-
-	void DeleteEvent() {
-		if (confirmdelete) {
-			myCalendar.deleteEvent(current_deleting_event.getID());
-			confirmdelete = false;
-		}
 	}
 
 	void thisistest(){
@@ -404,7 +397,7 @@ namespace cgui
 		ImGui::End();
 	}
 
-	void DrawCalendarV2() 
+	void DrawMainCalendar() 
 	{
 		ImGuiWindowClass window_class;
 		window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
@@ -415,8 +408,10 @@ namespace cgui
 		//get current date for month and year as a default opening kub
 		std::time_t currentTime = std::time(nullptr);
 		auto [current_day, current_month, current_year, current_hour, current_minute] = Utils::timeToDMY(currentTime);
-		static int ThisYear = current_year; 
-		static int ThisMonth = current_month;
+		//static int ThisYear = current_year; 
+		//static int ThisMonth = current_month;
+		if (ThisYear == -1) ThisYear = current_year;
+		if (ThisMonth == -1) ThisMonth = current_month;
 
 		const char* month_names[] = { "January", "February", "March", "April", "May", "June",
 										 "July", "August", "September", "October", "November", "December" };
@@ -1045,6 +1040,9 @@ namespace cgui
 					selected_day = s_day;
 					selected_month = s_month;
 					selected_year = s_year;
+
+					ThisMonth = s_month;
+					ThisYear = s_year;
 				}
 
 				float window_width = ImGui::GetWindowContentRegionMax().x;
