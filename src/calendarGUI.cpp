@@ -431,12 +431,19 @@ namespace cgui
 						float cell_h = 100.0f;
 						ImVec2 cursor_pos = ImGui::GetCursorScreenPos(); // top right coordinate of the box
 						
-						//selectable boxes
-						bool is_selected = (selected_day == nday);
+						bool is_selected = (selected_day == nday && selected_month == ThisMonth && selected_year == ThisYear);
+
 						if (ImGui::Selectable("##day", is_selected, 0, ImVec2(cell_w, cell_h))) {
-							selected_day = nday;
-							selected_month = ThisMonth;
-							selected_year = ThisYear;
+							if (is_selected) {
+								// if selected then deselect
+								selected_day = -1;
+							}
+							else {
+								// if didnt select this then select this
+								selected_day = nday;
+								selected_month = ThisMonth;
+								selected_year = ThisYear;
+							}
 						}
 
 						//fill numbers
