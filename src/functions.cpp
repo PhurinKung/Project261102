@@ -143,10 +143,14 @@ void CalendarManager::saveToFile() {
 	std::ofstream dest(data_filename);
 
 	for (const auto& i : allEvents) {
+		std::cout << "Saving..." << i.getTitle() << "\n";
 		if (i.getEndTime() < now) continue;
+
 
 		dest << i.getTitle() << "|" << i.getStartTime() << "|" << i.getEndTime() << "|" << i.getCategory() << "|"
 			<< i.getDetails() << "|" << i.getPlaces() << "|" << i.getID() << "\n";
+		std::cout << "Saved " << i.getTitle() << "\n";
+
 	}
 
 	dest.close();
@@ -283,10 +287,17 @@ std::vector<Event> CalendarManager::getUpcomingEvents(int N) {
 	time_t now = time(nullptr);
 
 	for (const auto& i : allEvents) {
+
+		if (i.getStartTime() <= now && i.getEndTime() >= now)
+			upcoming.push_back(i);
+
+		if (upcoming.size() > N) break;
+
 		if (i.getEndTime() >= now)
 			upcoming.push_back(i);
 
 		if (upcoming.size() == N) break;
+
 	}
 
 

@@ -1,6 +1,7 @@
 #include "calendarGUI.h"
 #include "imgui.h"
 #include "imgui_internal.h"
+#include "functions.h"
 #include <ctime>
 #include "functions.h"
 
@@ -108,8 +109,9 @@ namespace cgui
 
 							//save button
 							ImVec2 buttonSize(60, 35);
+							ImVec2 buttonSize_2(80, 35);
 
-							float targetX = WindowWidth - buttonSize.x - 20.0f;
+							float targetX = WindowWidth - buttonSize.x - buttonSize_2.x - 20.0f - 10.0f;
 							float targetY = WindowHeight - buttonSize.y - 20.0f;
 
 							ImGui::SetCursorPos(ImVec2(targetX, targetY));
@@ -117,6 +119,10 @@ namespace cgui
 							if (ImGui::Button("edit", buttonSize)) {
 								editing = true;
 								current_editing_event = ev;
+							}
+							ImGui::SameLine(0.0f, 20.0f);
+							if (ImGui::Button("delete", buttonSize_2)) {
+								
 							}
 							ImGui::EndTabItem();
 						}
@@ -435,12 +441,19 @@ namespace cgui
 						float cell_h = 100.0f;
 						ImVec2 cursor_pos = ImGui::GetCursorScreenPos(); // top right coordinate of the box
 						
-						//selectable boxes
-						bool is_selected = (selected_day == nday);
+						bool is_selected = (selected_day == nday && selected_month == ThisMonth && selected_year == ThisYear);
+
 						if (ImGui::Selectable("##day", is_selected, 0, ImVec2(cell_w, cell_h))) {
-							selected_day = nday;
-							selected_month = ThisMonth;
-							selected_year = ThisYear;
+							if (is_selected) {
+								// if selected then deselect
+								selected_day = -1;
+							}
+							else {
+								// if didnt select this then select this
+								selected_day = nday;
+								selected_month = ThisMonth;
+								selected_year = ThisYear;
+							}
 						}
 
 						//fill numbers
@@ -537,6 +550,7 @@ namespace cgui
 
 			ImGui::SameLine();
 
+			//close button
 			ImVec2 closeButton(20.0f, 20.0f);
 
 			float WindowWidth = ImGui::GetWindowWidth();
@@ -551,13 +565,13 @@ namespace cgui
 			}
 
 			ImGui::SetNextItemWidth(-20.0f);
-			static char event_name[100] = "Event's name"; //event's name
-			ImGui::InputText("##Event_Name", event_name, sizeof(event_name));
+			static char event_name[100] = ""; //event's name
+			ImGui::InputTextWithHint("##Event's name", "Event's Name", event_name, IM_ARRAYSIZE(event_name));
 			// วางคำสั่งนี้ลอยๆ ได้เลย ข้อความจะถูกเซฟลง event_name ตลอดเวลาที่พิมพ์
 
 			ImGui::SetNextItemWidth(-20.0f);
-			static char location[250] = "Location"; //the location
-			ImGui::InputText("##Location", location, sizeof(location));
+			static char location[250] = ""; //the location
+			ImGui::InputTextWithHint("##Location", "Location", location, IM_ARRAYSIZE(location));
 
 			//categories
 			ImGui::SetNextItemWidth(150.0f);
@@ -590,6 +604,12 @@ namespace cgui
 			};
 			ImGui::SetNextItemWidth(75.0f);
 			ImGui::Combo("##Select Month", &startmonth, Month, IM_ARRAYSIZE(Month));
+			
+			//std::map<int, std::string> MON = {
+			//	{0, "JAN"},{1, "FEB"},{2, "MAR"},{3, "APR"},{4, "MAY"},{5, "JUN"},
+			//	{6, "JUL"},{7, "AUG"},{8, "SEP"},{9, "OCT"},{10, "NOV"},{11, "DEC"}
+			//};
+
 			ImGui::SameLine();
 
 			static int startyear = 0;
@@ -728,7 +748,27 @@ namespace cgui
 			if (ImGui::Button("save", buttonSize)) {
 				// This is where you trigger your logic!
 
+				time_t st_timeinfo = Utils::DMYtoTime(atoi(Date[startdate]), startmonth+1, atoi(Year[startyear]), startHour, startMin);
+				time_t end_timeinfo = Utils::DMYtoTime(atoi(Date[enddate]), endMonth+1, atoi(Year[endYear]), endHour, endMin);
+
+				Event newEvent(event_name, st_timeinfo, end_timeinfo, items[selectedItem], detail, location);
+				myCalendar.addEvent(newEvent);
+				
+				//delete old info
+				event_name[0] = '\0';
+				location[0] = '\0';
+				detail[0] = '\0';
+
+				selectedItem = 0;
+
+				startdate = 0; startmonth = 0; startyear = 0;
+				startHour = 0; startMin = 0;
+
+				enddate = 0; endMonth = 0; endYear = 0;
+				endHour = 0; endMin = 0;
+
 				// Clear the text box after saving (optional)
+				ImGui::CloseCurrentPopup();
 			}
 
 			ImGui::EndPopup();
@@ -916,7 +956,6 @@ namespace cgui
 				const Event& ev = upcoming_events[i];
 				ImGui::PushID(ev.getID());
 
-				// 1. คำนวณหาสถานะ (In progress หรือ in X days)
 				time_t now = time(nullptr);
 				std::string status_text = "";
 
@@ -963,11 +1002,15 @@ namespace cgui
 						s_day, s_month, s_year, s_hour, s_min,
 						e_day, e_month, e_year, e_hour, e_min);
 
+					ImGui::SeparatorText("Category");
+					ImGui::Text("%s", ev.getCategory().c_str());
+
 					ImGui::SeparatorText("Location");
 					ImGui::Text("%s", ev.getPlaces().c_str());
 
 					ImGui::SeparatorText("Details");
 					ImGui::TextWrapped("%s", ev.getDetails().c_str());
+					ImGui::TextWrapped("");
 				}
 
 				ImGui::PopID();
