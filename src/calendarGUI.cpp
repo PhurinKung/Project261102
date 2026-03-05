@@ -1,6 +1,7 @@
 #include "calendarGUI.h"
 #include "imgui.h"
 #include "imgui_internal.h"
+#include "functions.h"
 #include <ctime>
 #include "functions.h"
 
@@ -10,8 +11,10 @@ namespace cgui
 	static int selected_year = -1;
 	static int selected_month = -1;
 	static int selected_day = -1; // -1 means no day is selected yet
+	static bool editing = false;
 	static bool createnewcategory = false;
 	static CalendarManager myCalendar;
+	static Event current_editing_event;
 
 	int FirstDayOfMonth(int, int);
 	int HowManyDaysInThisMonth(int, int);
@@ -22,6 +25,7 @@ namespace cgui
 	void SearchEvent();
 	void CreateNewCategory();
 	void showevent();
+	void EditEvent();
 
 	void ThewholecalendarGUI() 
 	{
@@ -59,6 +63,7 @@ namespace cgui
 		NewEvent();
 		SearchEvent();
 		CreateNewCategory();
+		EditEvent();
 	}
 	void showevent() {
 		// 1. Create a window class to override the docking behavior
@@ -101,16 +106,20 @@ namespace cgui
 
 							//save button
 							ImVec2 buttonSize(60, 35);
+							ImVec2 buttonSize_2(80, 35);
 
-							float targetX = WindowWidth - buttonSize.x - 20.0f;
+							float targetX = WindowWidth - buttonSize.x - buttonSize_2.x - 20.0f - 10.0f;
 							float targetY = WindowHeight - buttonSize.y - 20.0f;
 
 							ImGui::SetCursorPos(ImVec2(targetX, targetY));
 
-							if (ImGui::Button("save", buttonSize)) {
-								// This is where you trigger your logic!
-
-								// Clear the text box after saving (optional)
+							if (ImGui::Button("edit", buttonSize)) {
+								editing = true;
+								current_editing_event = ev;
+							}
+							ImGui::SameLine(0.0f, 20.0f);
+							if (ImGui::Button("delete", buttonSize_2)) {
+								
 							}
 							ImGui::EndTabItem();
 						}
@@ -129,6 +138,139 @@ namespace cgui
 			ImGui::TextDisabled("Select a day on the calendar to view events.");
 		}
 		ImGui::End();
+	}
+
+	void EditEvent() {
+		// 1. Static variables to hold the editing state
+		static char edit_title[100] = "";
+		static char edit_location[250] = "";
+		static char edit_details[1024] = "";
+		static int s_day, s_mon, s_year, s_hour, s_min;
+		static int e_day, e_mon, e_year, e_hour, e_min;
+		static int selected_cat_idx = 0;
+
+		// 2. TRIGGER BLOCK: This runs EXACTLY ONCE when you click "edit"
+		if (editing) {
+			// Copy the strings
+			snprintf(edit_title, sizeof(edit_title), "%s", current_editing_event.getTitle().c_str());
+			snprintf(edit_location, sizeof(edit_location), "%s", current_editing_event.getPlaces().c_str());
+			snprintf(edit_details, sizeof(edit_details), "%s", current_editing_event.getDetails().c_str());
+
+			// --- INJECT THE OLD START TIME ---
+			auto [sd, sm, sy, sh, smin] = Utils::timeToDMY(current_editing_event.getStartTime());
+			s_day = sd; s_mon = sm; s_year = sy; s_hour = sh; s_min = smin;
+
+			// --- INJECT THE OLD END TIME ---
+			auto [ed, em, ey, eh, emin] = Utils::timeToDMY(current_editing_event.getEndTime());
+			e_day = ed; e_mon = em; e_year = ey; e_hour = eh; e_min = emin;
+
+			// Match the old category to the dropdown
+			std::vector<std::string> cats = myCalendar.getCategories();
+			selected_cat_idx = 0;
+			for (int i = 0; i < cats.size(); i++) {
+				if (cats[i] == current_editing_event.getCategory()) {
+					selected_cat_idx = i;
+					break;
+				}
+			}
+
+			ImGui::OpenPopup("Edit Window");
+			editing = false;
+		}
+
+		// 3. DRAW THE POPUP
+		if (ImGui::BeginPopupModal("Edit Window", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+
+			// --- TITLE ---
+			ImGui::SetWindowFontScale(1.25f);
+			ImGui::PushItemWidth(380.0f);
+			ImGui::InputText("##EditTitle", edit_title, sizeof(edit_title));
+			ImGui::PopItemWidth();
+			ImGui::Separator();
+
+			float label_align = 140.0f;
+
+			// --- START TIME (Your exact layout code) ---
+			ImGui::AlignTextToFramePadding();
+			ImGui::Text("Start Time :"); ImGui::SameLine(label_align);
+			ImGui::PushItemWidth(35.0f);
+			ImGui::DragInt("##sD", &s_day, 0.5f, 1, 31, "%02d"); ImGui::SameLine(); ImGui::Text("/"); ImGui::SameLine();
+			ImGui::DragInt("##sM", &s_mon, 0.5f, 1, 12, "%02d"); ImGui::SameLine(); ImGui::Text("/"); ImGui::SameLine();
+			ImGui::PushItemWidth(55.0f);
+			ImGui::DragInt("##sY", &s_year, 0.5f, 2024, 2050, "%d"); ImGui::PopItemWidth(); ImGui::SameLine(); ImGui::Text(",  "); ImGui::SameLine();
+			ImGui::DragInt("##sh", &s_hour, 0.5f, 0, 23, "%02d"); ImGui::SameLine(); ImGui::Text(":"); ImGui::SameLine();
+			ImGui::DragInt("##sm", &s_min, 0.5f, 0, 59, "%02d");
+			ImGui::PopItemWidth();
+
+			// --- END TIME (Your exact layout code) ---
+			ImGui::AlignTextToFramePadding();
+			ImGui::Text("End Time   :"); ImGui::SameLine(label_align);
+			ImGui::PushItemWidth(35.0f);
+			ImGui::DragInt("##eD", &e_day, 0.5f, 1, 31, "%02d"); ImGui::SameLine(); ImGui::Text("/"); ImGui::SameLine();
+			ImGui::DragInt("##eM", &e_mon, 0.5f, 1, 12, "%02d"); ImGui::SameLine(); ImGui::Text("/"); ImGui::SameLine();
+			ImGui::PushItemWidth(55.0f);
+			ImGui::DragInt("##eY", &e_year, 0.5f, 2024, 2050, "%d"); ImGui::PopItemWidth(); ImGui::SameLine(); ImGui::Text(",  "); ImGui::SameLine();
+			ImGui::DragInt("##eh", &e_hour, 0.5f, 0, 23, "%02d"); ImGui::SameLine(); ImGui::Text(":"); ImGui::SameLine();
+			ImGui::DragInt("##emin", &e_min, 0.5f, 0, 59, "%02d");
+			ImGui::PopItemWidth();
+
+			// --- CATEGORY ---
+			ImGui::AlignTextToFramePadding();
+			ImGui::Text("Category   :"); ImGui::SameLine(label_align);
+			ImGui::PushItemWidth(180.0f);
+			std::vector<std::string> cats = myCalendar.getCategories();
+			if (!cats.empty()) {
+				if (ImGui::BeginCombo("##EditCat", cats[selected_cat_idx].c_str())) {
+					for (int i = 0; i < cats.size(); i++) {
+						bool is_selected = (selected_cat_idx == i);
+						if (ImGui::Selectable(cats[i].c_str(), is_selected)) selected_cat_idx = i;
+						if (is_selected) ImGui::SetItemDefaultFocus();
+					}
+					ImGui::EndCombo();
+				}
+			}
+			ImGui::PopItemWidth();
+
+			// --- LOCATION ---
+			ImGui::AlignTextToFramePadding();
+			ImGui::Text("Location   :"); ImGui::SameLine(label_align);
+			ImGui::PushItemWidth(250.0f);
+			ImGui::InputText("##EditLoc", edit_location, sizeof(edit_location));
+			ImGui::PopItemWidth();
+
+			// --- DETAILS ---
+			ImGui::SeparatorText("Details");
+			ImGui::InputTextMultiline("##EditDet", edit_details, sizeof(edit_details), ImVec2(380.0f, 120.0f), ImGuiInputTextFlags_WordWrap);
+
+			ImGui::Dummy(ImVec2(0.0f, 10.0f));
+
+			// --- SAVE & CANCEL BUTTONS ---
+			ImVec2 buttonSize(80, 30);
+			float targetX = ImGui::GetWindowWidth() - (buttonSize.x * 2.0f) - ImGui::GetStyle().ItemSpacing.x - 10.0f;
+			ImGui::SetCursorPosX(targetX);
+
+			if (ImGui::Button("Cancel", buttonSize)) {
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::SameLine();
+
+			if (ImGui::Button("Save", buttonSize)) {
+				// Convert the numbers from the DragInt boxes straight into time_t
+				time_t new_start = Utils::DMYtoTime(s_day, s_mon, s_year, s_hour, s_min);
+				time_t new_end = Utils::DMYtoTime(e_day, e_mon, e_year, e_hour, e_min);
+				std::string selected_cat_name = cats.empty() ? "Default" : cats[selected_cat_idx];
+
+				Event updated_event(
+					edit_title, new_start, new_end, selected_cat_name, edit_details, edit_location, current_editing_event.getID()
+				);
+
+				myCalendar.editEvent(current_editing_event.getID(), updated_event);
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
 	}
 
 	void thisistest(){
@@ -391,6 +533,7 @@ namespace cgui
 
 			ImGui::SameLine();
 
+			//close button
 			ImVec2 closeButton(20.0f, 20.0f);
 
 			float WindowWidth = ImGui::GetWindowWidth();
@@ -405,13 +548,13 @@ namespace cgui
 			}
 
 			ImGui::SetNextItemWidth(-20.0f);
-			static char event_name[100] = "Event's name"; //event's name
-			ImGui::InputText("##Event_Name", event_name, sizeof(event_name));
+			static char event_name[100] = ""; //event's name
+			ImGui::InputTextWithHint("##Event's name", "Event's Name", event_name, IM_ARRAYSIZE(event_name));
 			// วางคำสั่งนี้ลอยๆ ได้เลย ข้อความจะถูกเซฟลง event_name ตลอดเวลาที่พิมพ์
 
 			ImGui::SetNextItemWidth(-20.0f);
-			static char location[250] = "Location"; //the location
-			ImGui::InputText("##Location", location, sizeof(location));
+			static char location[250] = ""; //the location
+			ImGui::InputTextWithHint("##Location", "Location", location, IM_ARRAYSIZE(location));
 
 			//categories
 			ImGui::SetNextItemWidth(150.0f);
@@ -444,6 +587,12 @@ namespace cgui
 			};
 			ImGui::SetNextItemWidth(75.0f);
 			ImGui::Combo("##Select Month", &startmonth, Month, IM_ARRAYSIZE(Month));
+			
+			//std::map<int, std::string> MON = {
+			//	{0, "JAN"},{1, "FEB"},{2, "MAR"},{3, "APR"},{4, "MAY"},{5, "JUN"},
+			//	{6, "JUL"},{7, "AUG"},{8, "SEP"},{9, "OCT"},{10, "NOV"},{11, "DEC"}
+			//};
+
 			ImGui::SameLine();
 
 			static int startyear = 0;
@@ -582,7 +731,27 @@ namespace cgui
 			if (ImGui::Button("save", buttonSize)) {
 				// This is where you trigger your logic!
 
+				time_t st_timeinfo = Utils::DMYtoTime(atoi(Date[startdate]), startmonth+1, atoi(Year[startyear]), startHour, startMin);
+				time_t end_timeinfo = Utils::DMYtoTime(atoi(Date[enddate]), endMonth+1, atoi(Year[endYear]), endHour, endMin);
+
+				Event newEvent(event_name, st_timeinfo, end_timeinfo, items[selectedItem], detail, location);
+				myCalendar.addEvent(newEvent);
+				
+				//delete old info
+				event_name[0] = '\0';
+				location[0] = '\0';
+				detail[0] = '\0';
+
+				selectedItem = 0;
+
+				startdate = 0; startmonth = 0; startyear = 0;
+				startHour = 0; startMin = 0;
+
+				enddate = 0; endMonth = 0; endYear = 0;
+				endHour = 0; endMin = 0;
+
 				// Clear the text box after saving (optional)
+				ImGui::CloseCurrentPopup();
 			}
 
 			ImGui::EndPopup();
