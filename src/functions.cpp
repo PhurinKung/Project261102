@@ -78,6 +78,14 @@ void CalendarManager::loadFromFile() {
 					, place = data[5];
 				unsigned long long ID = stoull(data[6]);
 
+				//change <br> in detail to \n
+				size_t pos = 0;
+				while ((pos = detail.find("<br>", pos)) != std::string::npos) {
+					detail.replace(pos, 4, "\n");
+					pos += 1; // เลื่อนไปหลัง \n
+				}
+
+
 				Event LoadedEvent(title, StartTime, EndTime, category, detail, place, ID);
 				allEvents.push_back(LoadedEvent);
 
@@ -144,9 +152,17 @@ void CalendarManager::saveToFile() {
 		std::cout << "Saving..." << i.getTitle() << "\n";
 		if (i.getEndTime() < now) continue;
 
+		//change \n to <br>
+		std::string detail = i.getDetails();
+		size_t pos = 0;
+		while ((pos = detail.find('\n', pos)) != std::string::npos) {
+			detail.replace(pos, 1, "<br>");
+			pos += 4; // เลื่อนไปหลัง <br>
+		}
+
 
 		dest << i.getTitle() << "|" << i.getStartTime() << "|" << i.getEndTime() << "|" << i.getCategory() << "|"
-			<< i.getDetails() << "|" << i.getPlaces() << "|" << i.getID() << "\n";
+			<< detail << "|" << i.getPlaces() << "|" << i.getID() << "\n";
 		std::cout << "Saved " << i.getTitle() << "\n";
 
 	}
