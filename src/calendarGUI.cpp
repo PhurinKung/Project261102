@@ -22,6 +22,8 @@ namespace cgui
 	static CalendarManager myCalendar;
 	static Event current_editing_event, current_deleting_event;
 
+	static std::vector<std::string> cats = myCalendar.getCategories();
+
 	int FirstDayOfMonth(int, int);
 	int HowManyDaysInThisMonth(int, int);
 	void DrawMainCalendar();
@@ -234,7 +236,6 @@ namespace cgui
 			ImGui::AlignTextToFramePadding();
 			ImGui::Text("Category   :"); ImGui::SameLine(label_align);
 			ImGui::PushItemWidth(180.0f);
-			std::vector<std::string> cats = myCalendar.getCategories();
 			if (!cats.empty()) {
 				if (ImGui::BeginCombo("##EditCat", cats[selected_cat_idx].c_str())) {
 					for (int i = 0; i < cats.size(); i++) {
@@ -629,12 +630,55 @@ namespace cgui
 
 			//categories
 			ImGui::SetNextItemWidth(150.0f);
-			static int selectedItem = 0;
-			const char* items[] = { "Work", "Personal", "Business", "+ Add new" };
-			if (ImGui::Combo("##Select categories", &selectedItem, items, IM_ARRAYSIZE(items))) {
-				if (selectedItem == 3) {
+			static int selectedCatIdx = 0;
+
+			if (ImGui::BeginCombo("##EditCat", cats[selectedCatIdx].c_str())) {
+
+				for (int i = 0; i < cats.size(); i++) {
+					ImGui::PushID(i);
+
+					bool is_selected = (selectedCatIdx == i);
+
+					if (ImGui::Selectable(cats[i].c_str(), is_selected)) selectedCatIdx = i;
+
+					//if right click
+					if (ImGui::BeginPopupContextItem("DeleteCategoryMenu")) {
+						ImGui::TextDisabled("Options");
+						ImGui::Separator();
+
+						if (ImGui::Selectable("Edit")) {
+
+							// todo : edit Cat func
+						}
+
+						if (i != 0) { // if not personal can del
+							ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.3f, 0.3f, 1.0f));
+							if (ImGui::Selectable("Delete")) {
+							
+								myCalendar.deleteCategory(cats[i]);
+								cats = myCalendar.getCategories();
+
+								if (selectedCatIdx == i) selectedCatIdx = 0;
+								else if (selectedCatIdx > i) selectedCatIdx--;
+							}
+							ImGui::PopStyleColor();
+						}
+
+						ImGui::EndPopup();
+					}
+
+					if (is_selected) ImGui::SetItemDefaultFocus();
+
+					ImGui::PopID();
+				}
+
+				ImGui::Separator();
+
+				if (ImGui::Selectable("+ Add new")) {
 					createnewcategory = true;
 				}
+
+				ImGui::EndCombo();
 			}
 
 			/*-------------------------select date and time-----------------------------*/
@@ -844,7 +888,7 @@ namespace cgui
 				time_t st_timeinfo = Utils::DMYtoTime(atoi(Date[startdate]), startmonth+1, startyear, startHour, startMin);
 				time_t end_timeinfo = Utils::DMYtoTime(atoi(Date[enddate]), endMonth+1, endyear, endHour, endMin);
 
-				Event newEvent(event_name, st_timeinfo, end_timeinfo, items[selectedItem], detail, location);
+				Event newEvent(event_name, st_timeinfo, end_timeinfo, cats[selectedCatIdx], detail, location);
 				myCalendar.addEvent(newEvent);
 				
 				//delete old info
@@ -852,7 +896,7 @@ namespace cgui
 				location[0] = '\0';
 				detail[0] = '\0';
 
-				selectedItem = 0;
+				selectedCatIdx = 0;
 
 				startdate = 0; startmonth = 0; startyear = 0;
 				startHour = 0; startMin = 0;
@@ -1077,6 +1121,9 @@ namespace cgui
 
 					//Clear the text box so it's empty next time the popup opens
 					memset(new_category, 0, sizeof(new_category));
+
+					//update to cats
+					cats = myCalendar.getCategories();
 
 				}
 				ImGui::CloseCurrentPopup();

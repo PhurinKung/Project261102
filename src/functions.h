@@ -53,7 +53,7 @@ public:
 	std::string getPlaces() const { return places; }
 	unsigned long long getID() const { return id; }
 
-	void changeTitle(std::string newCat) { category = newCat; }
+	void changeCats(std::string newCat) { category = newCat; }
 
 	// compare func for sort
 	// sort by start date, end date, id

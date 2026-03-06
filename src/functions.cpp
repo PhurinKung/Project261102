@@ -249,7 +249,7 @@ std::pair<bool, std::string> CalendarManager::deleteCategory(std::string sadCate
 	// loop find all deleted category
 	for (auto& e : allEvents) {
 		if (e.getCategory() == sadCategory) {
-			e.changeTitle("Personal");
+			e.changeCats("Personal");
 		}
 	}
 
