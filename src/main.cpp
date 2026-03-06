@@ -60,7 +60,7 @@ int main(int, char**)
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
 
-    io.Fonts->AddFontDefault();
+    //io.Fonts->AddFontDefault();
 
     //add thai font here. NotoSansThai
     ImFont* thaiFont_normal = io.Fonts->AddFontFromFileTTF(
@@ -114,7 +114,7 @@ int main(int, char**)
     //IM_ASSERT(font != nullptr);
 
     // Our state
-    bool show_demo_window = true;
+    bool show_demo_window = false;
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
@@ -159,7 +159,7 @@ int main(int, char**)
 
         //code goes here kub
         cgui::ThewholecalendarGUI();
-        ImGui::ShowDemoWindow(&show_demo_window);
+        //ImGui::ShowDemoWindow(&show_demo_window);
 
         /*
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).

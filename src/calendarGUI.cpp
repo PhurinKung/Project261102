@@ -3,7 +3,6 @@
 #include "imgui_internal.h"
 #include "functions.h"
 #include <ctime>
-#include "functions.h"
 
 namespace cgui
 {
@@ -303,7 +302,7 @@ namespace cgui
 
 		if (ImGui::BeginPopupModal("ConfirmDelete", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar)){
 			
-			ImFont* Title = ImGui::GetIO().Fonts->Fonts[2];
+			ImFont* Title = ImGui::GetIO().Fonts->Fonts[1];
 			ImGui::PushFont(Title);
 			ImGui::Text("Confirm Delete");
 			ImGui::PopFont();
@@ -602,7 +601,7 @@ namespace cgui
 
 		if (ImGui::BeginPopupModal("NewEvent", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar)) {
 
-			ImFont* Title = ImGui::GetIO().Fonts->Fonts[2];
+			ImFont* Title = ImGui::GetIO().Fonts->Fonts[1];
 			ImGui::PushFont(Title);
 			ImGui::Text("New Event");
 			ImGui::PopFont();
@@ -932,7 +931,7 @@ namespace cgui
 
 		if (ImGui::BeginPopupModal("SearchEvent", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar)) {
 
-			ImFont* Title = ImGui::GetIO().Fonts->Fonts[2];
+			ImFont* Title = ImGui::GetIO().Fonts->Fonts[1];
 			ImGui::PushFont(Title);
 			ImGui::Text("Search Events");
 			ImGui::PopFont();
@@ -1158,7 +1157,7 @@ namespace cgui
 	void UpcomingEvent()
 	{
 		int n_events = 5;
-		ImFont* Title = ImGui::GetIO().Fonts->Fonts[2];
+		ImFont* Title = ImGui::GetIO().Fonts->Fonts[1];
 		ImGuiWindowClass window_class;
 		window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
 		ImGui::SetNextWindowClass(&window_class);
