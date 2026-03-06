@@ -116,6 +116,7 @@ public:
 
 	std::pair<bool, std::string> addCategory(EventCategory newCategory);
 	std::pair<bool, std::string> deleteCategory(std::string sadCategory);
+	std::pair<bool, std::string> editCategory(std::string nameOldCategory, EventCategory newCategory);
 
 	// Find & Search
 	const std::vector<Event>& getAllEvents() const; // ใช้ const& ไม่ให้ copy ข้อมูล เปลืองแรม
@@ -125,5 +126,5 @@ public:
 
 
 	std::vector<std::string> getCategories();
-	std::vector<std::pair<std::string, std::tuple<float, float, float, float >>> getColorCategory(); // return pair <string name,tuple RGBA>
+	std::vector<std::pair<std::string, std::tuple<float, float, float, float >>> getColorCategory(); // return pair <string cate_name,tuple RGBA>
 };
