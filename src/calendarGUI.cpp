@@ -17,6 +17,11 @@ namespace cgui
 	static bool editing = false;
 	static bool confirmDelete = false;
 	static bool createnewcategory = false;
+	
+	static std::string category_to_edit = "";
+	static bool is_cate_editing_mode = false;
+	static bool EditCate = false;
+
 	static CalendarManager myCalendar;
 	static Event current_editing_event, current_deleting_event;
 
@@ -645,14 +650,15 @@ namespace cgui
 						ImGui::Separator();
 
 						if (ImGui::Selectable("Edit")) {
-
-							// todo : edit Cat func
+							EditCate = true;
+							is_cate_editing_mode = true;
+							category_to_edit = cats[i];
 						}
 
 						if (i != 0) { // if not personal can del
 							ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.3f, 0.3f, 1.0f));
 							if (ImGui::Selectable("Delete")) {
-							
+								
 								myCalendar.deleteCategory(cats[i]);
 								cats = myCalendar.getCategories();
 
@@ -673,6 +679,7 @@ namespace cgui
 				ImGui::Separator();
 
 				if (ImGui::Selectable("+ Add new")) {
+					is_cate_editing_mode = false;
 					createnewcategory = true;
 				}
 
@@ -1044,14 +1051,35 @@ namespace cgui
 		static ImVec4 backup_color;                               // Saves the color in case you cancel
 		static ImVec4 saved_palette[32] = {};                     // Array to hold the 32 little palette squares
 		static bool saved_palette_init = true;
+		static char category_name[256] = "";			
 		ImGuiColorEditFlags base_flags = ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_AlphaPreviewHalf |
 				ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_DisplayHSV |
 				ImGuiColorEditFlags_DisplayHex;
 
 		if (createnewcategory)
 		{
+			//set default
+			memset(category_name, 0, sizeof(category_name));
+			color = ImVec4(0.11f, 0.38f, 0.48f, 1.0f);
+
 			ImGui::OpenPopup("Category Color Picker");
 			createnewcategory = false;
+		}
+
+		if (EditCate) {
+			// set to this cate data
+			snprintf(category_name, sizeof(category_name), "%s", category_to_edit.c_str());
+			auto cat_colors = myCalendar.getColorCategory();
+			for (const auto& c : cat_colors) {
+				if (c.first == category_to_edit) {
+					auto [r, g, b, a] = c.second; 
+					color = ImVec4(r, g, b, a);
+					break;
+				}
+			}
+
+			ImGui::OpenPopup("Category Color Picker");
+			EditCate = false;
 		}
 
 		if (saved_palette_init) {
@@ -1066,9 +1094,9 @@ namespace cgui
 		//Popup if trigger
 		if (ImGui::BeginPopupModal("Category Color Picker", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 		{
-			static char new_category[256] = "";
-			ImGui::Text("Pick a color for your new category :");
-			ImGui::InputText("##", new_category, sizeof(new_category));
+			if(!is_cate_editing_mode) ImGui::Text("Pick a color for your new category :");
+			else ImGui::Text("Pick a color for your category :");
+			ImGui::InputText("##", category_name, sizeof(category_name));
 			ImGui::Separator();
 
 			// The main picker
@@ -1123,28 +1151,24 @@ namespace cgui
 			ImGui::SetItemDefaultFocus();
 			ImGui::SameLine();
 			if (ImGui::Button("Save Color", ImVec2(120, 0))) {
-				if (strlen(new_category) > 0) {
+				if (strlen(category_name) > 0) {
 
 					// ImVec4 stores RGBA as x, y, z, w
-					EventCategory new_cat(std::string(new_category),
+					EventCategory new_cat(std::string(category_name),
 						color.x, // R
 						color.y, // G
 						color.z, // B
 						color.w  // A
 					);
-					// 2. Push it to your main CalendarManager instance
-					myCalendar.addCategory(new_cat);
 
-					// 3. Clear the text box so it's empty next time the popup opens
-					memset(new_category, 0, sizeof(new_category));
-					myCalendar.addCategory(new_cat);
-
-					//Clear the text box so it's empty next time the popup opens
-					memset(new_category, 0, sizeof(new_category));
-
-					//update to cats
-					cats = myCalendar.getCategories();
-
+					if (is_cate_editing_mode) {
+						myCalendar.editCategory(category_to_edit, new_cat);
+						category_to_edit = "";
+					}
+					else {
+						myCalendar.addCategory(new_cat);
+						cats = myCalendar.getCategories(); //update to cats
+					}				
 				}
 				ImGui::CloseCurrentPopup();
 			}

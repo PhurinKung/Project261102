@@ -256,6 +256,16 @@ std::pair<bool, std::string> CalendarManager::deleteCategory(std::string sadCate
 	return { false, "Can't find this category" };
 }
 
+std::pair<bool, std::string> CalendarManager::editCategory(std::string nameOldCategory, EventCategory newCategory) {
+	for (auto& c : categories) {
+		if (c.getname() == nameOldCategory) {
+			c = newCategory;
+			return { true, "Success" };
+		}
+	}
+	return { false, "Can't find this cate" };
+}
+
 const std::vector<Event>& CalendarManager::getAllEvents() const {
 	return allEvents;
 }
