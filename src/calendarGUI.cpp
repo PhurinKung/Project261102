@@ -15,9 +15,8 @@ namespace cgui
 	static int ThisMonth = -1;
 
 	static bool editing = false;
-	bool confirmDelete = false;
+	static bool confirmDelete = false;
 	static bool createnewcategory = false;
-	static bool confirmdelete = false;
 	static CalendarManager myCalendar;
 	static Event current_editing_event, current_deleting_event;
 
@@ -685,7 +684,15 @@ namespace cgui
 			ImGui::Text("STARTS");
 			ImGui::SameLine();
 
-			static int startdate = 0;
+			time_t currentTime = time(nullptr);
+			auto [c_day, c_month, c_year, c_hour, c_minute] = Utils::timeToDMY(currentTime);
+
+			static int startdate = -1;
+			if (startdate == -1) {
+				if (selected_day == -1) { startdate = c_day - 1; }
+				else { startdate = selected_day - 1; }
+			}
+
 			const char* Date[] = {
 				"1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
 				"11", "12", "13", "14", "15", "16", "17", "18", "19", "20",
@@ -695,7 +702,11 @@ namespace cgui
 			ImGui::Combo("##Select startdate", &startdate, Date, IM_ARRAYSIZE(Date));
 			ImGui::SameLine();
 
-			static int startmonth = 0;
+			static int startmonth = -1;
+			if (startmonth == -1) {
+				if (selected_month == -1) { startmonth = c_month - 1; }
+				else { startmonth = selected_month - 1; }
+			}
 			const char* Month[] = {
 				"JAN", "FEB", "MAR", "APR", "MAY", "JUN","JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
 			};
@@ -705,11 +716,6 @@ namespace cgui
 
 			ImGui::SameLine();
 
-			//const char* Year[] = {
-			//	"2026", "2027", "2028", "2029", "2030", "2031","2032", "2033", "2034", "2035", "2036"
-			//};
-			//ImGui::SetNextItemWidth(75.0f);
-			//ImGui::Combo("##Select Year", &startyear, Year, IM_ARRAYSIZE(Year));
 			static int startyear = 0;
 			if (startyear == 0) {
 				startyear = selected_year;
@@ -785,12 +791,20 @@ namespace cgui
 			ImGui::SameLine(0.0f, 25.0f);
 
 			ImGui::SetNextItemWidth(60.0f);
-			static int enddate = 0;
+			static int enddate = -1;
+			if (enddate == -1) {
+				if (selected_day == -1) { enddate = c_day - 1; }
+				else { enddate = selected_day - 1; }
+			}
 			ImGui::Combo("##Select enddate", &enddate, Date, IM_ARRAYSIZE(Date));
 			ImGui::SameLine();
 
 			ImGui::SetNextItemWidth(75.0f);
-			static int endMonth = 0;
+			static int endMonth = -1;
+			if (endMonth == -1) {
+				if (selected_month == -1) { endMonth = c_month - 1; }
+				else { endMonth = selected_month - 1; }
+			}
 			ImGui::Combo("##Select endMonth", &endMonth, Month, IM_ARRAYSIZE(Month));
 			ImGui::SameLine();
 
@@ -925,6 +939,7 @@ namespace cgui
 
 		if (ImGui::BeginPopupModal("SearchEvent", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar)) {
 
+			ImGui::SetWindowFontScale(1.25f);
 			ImFont* Title = ImGui::GetIO().Fonts->Fonts[1];
 			ImGui::PushFont(Title);
 			ImGui::Text("Search Events");
@@ -932,7 +947,7 @@ namespace cgui
 
 			ImGui::SameLine();
 
-			ImVec2 closeButton(20.0f, 20.0f);
+			ImVec2 closeButton(25.0f, 25.0f);
 			float WindowWidth = ImGui::GetWindowWidth();
 			float targetX = WindowWidth - closeButton.x - 10.0f;
 
@@ -942,19 +957,24 @@ namespace cgui
 			static std::vector<Event> search_results;
 			static bool has_searched = false;
 
+			ImGui::SetWindowFontScale(1.0f);
 			if (ImGui::Button("X", closeButton)) {
 				searchText[0] = '\0';
 				search_results.clear();
 				has_searched = false;
 				ImGui::CloseCurrentPopup();
 			}
+			ImGui::SetWindowFontScale(1.25f);
 
 			ImGui::SetNextItemWidth(0.75 * ImGui::GetWindowWidth());
-			ImGui::InputTextWithHint("##SearchInput", "Search here...", searchText, IM_ARRAYSIZE(searchText));
+			//press enter to search
+			bool isEnterPressed =  ImGui::InputTextWithHint("##SearchInput", "Search here...", searchText, IM_ARRAYSIZE(searchText), 
+				ImGuiInputTextFlags_EnterReturnsTrue
+			);
 
 			ImGui::SameLine();
 
-			if (ImGui::Button("search")) {
+			if (ImGui::Button("search") || isEnterPressed) {
 				// เรียกใช้ฟังก์ชันค้นหาจาก Backend
 				search_results = myCalendar.searchEvents(std::string(searchText));
 				has_searched = true;
@@ -967,6 +987,7 @@ namespace cgui
 			// 2. สร้างกล่องเลื่อนได้ (Child Window) สำหรับแสดงผลลัพธ์
 			// พารามิเตอร์ ImVec2(0, 0) แปลว่า ให้กินพื้นที่ที่เหลือด้านล่างทั้งหมด
 			ImGui::BeginChild("SearchResultsRegion", ImVec2(0, 0), true);
+			ImGui::SetWindowFontScale(1.25f);
 
 			if (has_searched) {
 				if (search_results.empty()) {
