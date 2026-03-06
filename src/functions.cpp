@@ -231,6 +231,31 @@ std::pair<bool, std::string> CalendarManager::addCategory(EventCategory newCateg
 	return { true, "Success" };
 }
 
+std::pair<bool, std::string> CalendarManager::deleteCategory(std::string sadCategory) {
+	if (sadCategory == "Personal") {
+		return { false, "Can't delete default category" };
+	}
+
+	auto it = find_if(categories.begin(), categories.end(),
+		[sadCategory](const EventCategory& c) {
+			return c.getname() == sadCategory;
+		});
+
+	if (it != categories.end()) {
+		categories.erase(it);
+		return { true, "success" };
+	}
+
+	// loop find all deleted category
+	for (auto& e : allEvents) {
+		if (e.getCategory() == sadCategory) {
+			e.changeCats("Personal");
+		}
+	}
+
+	return { false, "Can't find this category" };
+}
+
 const std::vector<Event>& CalendarManager::getAllEvents() const {
 	return allEvents;
 }
