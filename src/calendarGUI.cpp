@@ -96,16 +96,22 @@ namespace cgui
 				if (ImGui::BeginTabBar("EventTabs")) {
 					for (auto& ev : events_today) {
 						if (ImGui::BeginTabItem(ev.getTitle().c_str())) {
+
+							// 1. กำหนดความสูงของพื้นที่ด้านล่างที่ต้องการกันไว้ให้ปุ่ม (ความสูงปุ่ม 35 + ระยะขอบนิดหน่อย = 55)
+							float footer_height_to_reserve = 55.0f;
+
+							// 2. สร้างกล่อง Child สำหรับเนื้อหา (ใส่ -footer_height เพื่อกันพื้นที่ด้านล่างไว้)
+							ImGui::BeginChild("ScrollingDetails", ImVec2(0, -footer_height_to_reserve));
+
+							// --- เริ่มวาดเนื้อหา (ย้ายโค้ดเดิมเข้ามาในนี้) ---
 							ImGui::SetWindowFontScale(1.75f);
 							ImGui::Text("%s", ev.getTitle().c_str());
 							ImGui::Separator();
 							ImGui::SetWindowFontScale(1.25f);
 
-							//ImGui::Text("%02d/%02d/%d", selected_day, selected_month, selected_year);
 							auto [s_day, s_mon, s_year, s_hour, s_min] = Utils::timeToDMY(ev.getStartTime());
 							auto [e_day, e_mon, e_year, e_hour, e_min] = Utils::timeToDMY(ev.getEndTime());
 
-							// 5. Print the exact details
 							ImGui::Text("Start Time : %02d/%02d/%d,  %02d:%02d", s_day, s_mon, s_year, s_hour, s_min);
 							ImGui::Text("End Time   : %02d/%02d/%d,  %02d:%02d", e_day, e_mon, e_year, e_hour, e_min);
 							ImGui::Text("Category   : %s", ev.getCategory().c_str());
@@ -114,27 +120,36 @@ namespace cgui
 							ImGui::SeparatorText("Details");
 							ImGui::TextWrapped("%s", ev.getDetails().c_str());
 
-							float WindowWidth = ImGui::GetWindowWidth();
-							float WindowHeight = ImGui::GetWindowHeight();
+							// ปิดกล่องเนื้อหาตรงนี้
+							ImGui::EndChild();
 
-							//save button
+							// ==========================================
+							// 3. พื้นที่ Footer ด้านล่าง (จะไม่ขยับตามเวลาเลื่อน Scrollbar)
+							// ==========================================
+							ImGui::Separator(); // ตีเส้นคั่นบางๆ ให้ดูเป็นสัดส่วน
+							ImGui::Dummy(ImVec2(0.0f, 4.0f)); // ดันลงมานิดนึงให้สวยงาม
+
 							ImVec2 buttonSize(60, 35);
 							ImVec2 buttonSize_2(80, 35);
 
-							float targetX = WindowWidth - buttonSize.x - buttonSize_2.x - 20.0f - 10.0f;
-							float targetY = WindowHeight - buttonSize.y - 20.0f;
+							// คำนวณหาตำแหน่งแกน X เพื่อดันปุ่มไปชิดขวา
+							float WindowWidth = ImGui::GetWindowWidth();
+							float targetX = WindowWidth - buttonSize.x - buttonSize_2.x - ImGui::GetStyle().ItemSpacing.x - 20.0f;
 
-							ImGui::SetCursorPos(ImVec2(targetX, targetY));
+							ImGui::SetCursorPosX(targetX); // กระโดดไปแกน X ที่คำนวณไว้
 
 							if (ImGui::Button("edit", buttonSize)) {
 								editing = true;
 								current_editing_event = ev;
 							}
-							ImGui::SameLine(0.0f, 20.0f);
+
+							ImGui::SameLine();
+
 							if (ImGui::Button("delete", buttonSize_2)) {
 								confirmDelete = true;
 								current_deleting_event = ev;
 							}
+
 							ImGui::EndTabItem();
 						}
 					}
@@ -980,7 +995,7 @@ namespace cgui
 				}
 				else {
 					ImGui::TextDisabled("Found %d events:", (int)search_results.size());
-					ImGui::Dummy(ImVec2(0.0f, 5.0f));
+					ImGui::Separator();
 
 					// 3. วนลูปวาดผลลัพธ์ทีละอัน
 					for (const auto& ev : search_results) {
@@ -1169,6 +1184,12 @@ namespace cgui
 		ImGui::Text("Upcoming Events");
 		ImGui::PopFont();
 
+		// ==========================================================
+		// 1. เริ่มสร้างกล่องพื้นที่สำหรับเลื่อนเนื้อหา (เว้นด้านล่างไว้ 100 พิกเซล)
+		// ==========================================================
+		float footer_height = 100.0f; // ขนาดที่ต้องการกันไว้ให้ปุ่ม (ปุ่มสูง 60 + ระยะห่าง)
+		ImGui::BeginChild("UpcomingScrollable", ImVec2(0, -footer_height));
+
 		if (upcoming_events.empty()) {
 			ImGui::TextDisabled("No upcoming events.");
 		}
@@ -1206,8 +1227,9 @@ namespace cgui
 					selected_month = s_month;
 					selected_year = s_year;
 
-					ThisMonth = s_month;
-					ThisYear = s_year;
+					// อัปเดตเพื่อให้ปฏิทินเปลี่ยนเดือนตามด้วย
+					// ThisMonth = s_month;
+					// ThisYear = s_year;
 				}
 
 				float window_width = ImGui::GetWindowContentRegionMax().x;
@@ -1241,7 +1263,13 @@ namespace cgui
 			}
 		}
 
+		// ==========================================================
+		// 2. ปิดกล่องเลื่อน (เนื้อหาจบแค่นี้)
+		// ==========================================================
+		ImGui::EndChild();
+
 		//----------------------------------------------
+		// 3. พื้นที่ Footer: ปักหลักปุ่มให้อยู่นิ่งๆ
 		ImVec2 buttonSize(60, 60);
 
 		float WindowHeight = ImGui::GetWindowHeight();
