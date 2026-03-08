@@ -34,7 +34,7 @@ namespace cgui
 	void ShowEvent();
 	void EditEvent();
 	void ConfirmDelete();
-	void MiniCalendar();
+	void MiniCalendar(const char* , int& , int& , int& );
 
 	void ThewholecalendarGUI() 
 	{
@@ -74,7 +74,6 @@ namespace cgui
 		CreateNewCategory();
 		EditEvent();
 		ConfirmDelete();
-		MiniCalendar();
 	}
 	void ShowEvent() {
 		// 1. Create a window class to override the docking behavior
@@ -213,22 +212,28 @@ namespace cgui
 			ImGui::AlignTextToFramePadding();
 			ImGui::Text("Start Time :"); ImGui::SameLine(label_align);
 			ImGui::PushItemWidth(35.0f);
-			ImGui::DragInt("##sD", &s_day, 0.5f, 1, 31, "%02d"); ImGui::SameLine(); ImGui::Text("/"); ImGui::SameLine();
-			ImGui::DragInt("##sM", &s_mon, 0.5f, 1, 12, "%02d"); ImGui::SameLine(); ImGui::Text("/"); ImGui::SameLine();
-			ImGui::PushItemWidth(55.0f);
-			ImGui::DragInt("##sY", &s_year, 0.5f, 2024, 2050, "%d"); ImGui::PopItemWidth(); ImGui::SameLine(); ImGui::Text(",  "); ImGui::SameLine();
-			ImGui::DragInt("##sh", &s_hour, 0.5f, 0, 23, "%02d"); ImGui::SameLine(); ImGui::Text(":"); ImGui::SameLine();
-			ImGui::DragInt("##sm", &s_min, 0.5f, 0, 59, "%02d");
+			char edit_start_btn[32];
+			snprintf(edit_start_btn, sizeof(edit_start_btn), "%02d/%02d/%d##editstart", s_day, s_mon, s_year);
+			if (ImGui::Button(edit_start_btn, ImVec2(150, 0))) {
+				ImGui::OpenPopup("Start Date");
+			}
+			MiniCalendar("Start Date", s_day, s_mon, s_year);
+			ImGui::SameLine(); ImGui::Text(", "); ImGui::SameLine();
+			ImGui::DragInt("##sh", &e_hour, 0.5f, 0, 23, "%02d"); ImGui::SameLine(); ImGui::Text(":"); ImGui::SameLine();
+			ImGui::DragInt("##smin", &e_min, 0.5f, 0, 59, "%02d");
 			ImGui::PopItemWidth();
 
 			// --- END TIME (Your exact layout code) ---
 			ImGui::AlignTextToFramePadding();
 			ImGui::Text("End Time   :"); ImGui::SameLine(label_align);
 			ImGui::PushItemWidth(35.0f);
-			ImGui::DragInt("##eD", &e_day, 0.5f, 1, 31, "%02d"); ImGui::SameLine(); ImGui::Text("/"); ImGui::SameLine();
-			ImGui::DragInt("##eM", &e_mon, 0.5f, 1, 12, "%02d"); ImGui::SameLine(); ImGui::Text("/"); ImGui::SameLine();
-			ImGui::PushItemWidth(55.0f);
-			ImGui::DragInt("##eY", &e_year, 0.5f, 2024, 2050, "%d"); ImGui::PopItemWidth(); ImGui::SameLine(); ImGui::Text(",  "); ImGui::SameLine();
+			char edit_end_btn[32];
+			snprintf(edit_end_btn, sizeof(edit_end_btn), "%02d/%02d/%d##editend", e_day, e_mon, e_year);
+			if (ImGui::Button(edit_end_btn, ImVec2(150, 0))) {
+				ImGui::OpenPopup("End Date");
+			}
+			MiniCalendar("End Date", e_day, e_mon, e_year);
+			ImGui::SameLine(); ImGui::Text(", "); ImGui::SameLine();
 			ImGui::DragInt("##eh", &e_hour, 0.5f, 0, 23, "%02d"); ImGui::SameLine(); ImGui::Text(":"); ImGui::SameLine();
 			ImGui::DragInt("##emin", &e_min, 0.5f, 0, 59, "%02d");
 			ImGui::PopItemWidth();
@@ -589,42 +594,67 @@ namespace cgui
 		ImGui::End();
 	}
 
-	void MiniCalendar() {
-		std::time_t currentTime = std::time(nullptr);
-		auto [current_day, current_month, current_year, current_hour, current_minute] = Utils::timeToDMY(currentTime);
-		static int this_year = current_year;
-		static int this_month = current_month;
-		static int this_day = current_day;
+	void MiniCalendar(const char* popup_id, int& return_day, int& return_month, int& return_year) {
+		static int this_year;
+		static int this_month;
+		static int this_day;
+
 		const char* month_names[] = { "January", "February", "March", "April", "May", "June",
 										 "July", "August", "September", "October", "November", "December" };
 
-		if (opoenminicalendar) { 
-			ImGui::OpenPopup("Mini Calendar");
-			
-		}
-		if (ImGui::BeginPopupModal("Mini Calendar", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+		bool is_open = true;
+		if (ImGui::BeginPopupModal(popup_id, &is_open, ImGuiWindowFlags_AlwaysAutoResize)) {
+
+			if (ImGui::IsWindowAppearing()) //ในวินาทีแรกที่popupแสดงขึ้นมาจะเข้าเงื่อนไขนี้
+			{
+				this_day = return_day;
+				this_month = return_month;
+				this_year = return_year;
+			}
+			if (!is_open) {
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::SetWindowFontScale(1.25f);
+
+			float arrow_width = ImGui::GetFrameHeight(); // ความกว้างปุ่มลูกศร (ทรงจัตุรัส)
+			const char* current_month_text = month_names[this_month - 1];
+			float text_width = ImGui::CalcTextSize(current_month_text).x;
+			float window_width = ImGui::GetWindowWidth();
+			float padding = ImGui::GetStyle().WindowPadding.x;
+
+			// 1. วาดปุ่มซ้าย (ชิดขอบซ้ายโดยอัตโนมัติอยู่แล้ว)
 			if (ImGui::ArrowButton("##left", ImGuiDir_Left)) {
 				this_month--;
-				if (this_month < 1) {
-					this_month = 12;
-					this_year--;
-				}
+				if (this_month < 1) { this_month = 12; this_year--; }
 			}
+
+			// 2. วาดชื่อเดือนให้อยู่ตรงกลางหน้าต่างเป๊ะๆ
 			ImGui::SameLine();
-			ImGui::Text("%s", month_names[this_month - 1]);
+			ImGui::SetCursorPosX((window_width - text_width) * 0.5f);
+			ImGui::Text("%s", current_month_text);
+
+			// 3. วาดปุ่มขวา ดันไปชิดขอบขวา (ความกว้างหน้าต่าง - ขนาดปุ่ม - ระยะขอบ)
 			ImGui::SameLine();
+			ImGui::SetCursorPosX(window_width - arrow_width - padding);
 			if (ImGui::ArrowButton("##right", ImGuiDir_Right)) {
 				this_month++;
-				if (this_month > 12) {
-					this_month = 1;
-					this_year++;
-				}
+				if (this_month > 12) { this_month = 1; this_year++; }
 			}
-			ImGui::Text("%d", this_year);
+
+			// --- CENTER THE YEAR ---
+			std::string year_str = std::to_string(this_year);
+			float year_width = ImGui::CalcTextSize(year_str.c_str()).x;
+			float year_start_x = (ImGui::GetWindowSize().x - year_width) * 0.5f;
+			if (year_start_x > 0.0f) ImGui::SetCursorPosX(year_start_x);
+
+			ImGui::SetWindowFontScale(1.0f);
+			ImGui::Text("%s", year_str.c_str());
 
 			if (ImGui::BeginTable("CalendarTable", 7)) {
 				const char* days[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 				ImGui::TableNextRow();
+				ImGui::SetWindowFontScale(1.0f);
 				for (int i = 0; i < 7; i++) {
 					ImGui::TableSetColumnIndex(i);
 
@@ -634,7 +664,7 @@ namespace cgui
 					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset);
 					ImGui::Text("%s", days[i]);
 				}
-
+				ImGui::SetWindowFontScale(1.25f);
 				//days of month
 				int DayOne = FirstDayOfMonth(this_year, this_month); //position of the first day of the month
 				int AllDay = HowManyDaysInThisMonth(this_year, this_month);
@@ -651,20 +681,13 @@ namespace cgui
 
 							ImGui::PushID(nday);
 							float cell_w = ImGui::GetContentRegionAvail().x;
-							float cell_h = 30.0f;
+							float cell_h = cell_w;
 							ImVec2 cursor_pos = ImGui::GetCursorScreenPos(); // top right coordinate of the box
 
-							bool is_selected = (this_day == nday && this_month == this_month && this_year == this_year);
+							bool is_selected = (this_day == nday);
 
-							if (ImGui::Selectable("##day", is_selected, 0, ImVec2(cell_w, cell_h))) {
-								if (is_selected) {
-									// if selected then deselect
-									this_day = -1;
-								}
-								else {
-									// if didnt select this then select this
-									this_day = nday;
-								}
+							if (ImGui::Selectable("##day", is_selected, ImGuiSelectableFlags_DontClosePopups, ImVec2(cell_w, cell_h))) {
+								this_day = nday;
 							}
 
 							//fill numbers
@@ -682,10 +705,21 @@ namespace cgui
 				}
 				ImGui::EndTable();
 			}
-
+			//ImGui::Dummy(ImVec2(0.0f, 1.0f));
+			ImVec2 buttonSize(80.0f, 25.0f);
+			float targetX = ImGui::GetWindowWidth() - buttonSize.x - ImGui::GetStyle().WindowPadding.x;
+			ImGui::SetCursorPosX(targetX);
+			ImGui::SetWindowFontScale(1.0f);
+			if (ImGui::Button("Confirm", buttonSize)) {
+				return_day = this_day;
+				return_month = this_month;
+				return_year = this_year;
+				ImGui::CloseCurrentPopup();
+			}
 			ImGui::EndPopup();
 		}
 	}
+
 
 	//add new event
 	void NewEvent() {
