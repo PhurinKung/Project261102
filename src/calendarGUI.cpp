@@ -19,7 +19,6 @@ namespace cgui
 	bool confirmDelete = false;
 	static bool createnewcategory = false;
 	static bool confirmdelete = false;
-	static bool opoenminicalendar = false;
 	static CalendarManager myCalendar;
 	static Event current_editing_event, current_deleting_event;
 
@@ -114,7 +113,6 @@ namespace cgui
 							float WindowWidth = ImGui::GetWindowWidth();
 							float WindowHeight = ImGui::GetWindowHeight();
 
-							//save button
 							ImVec2 buttonSize(60, 35);
 							ImVec2 buttonSize_2(80, 35);
 
@@ -145,7 +143,6 @@ namespace cgui
 		}
 		else
 		{
-			// What it shows when they first open the app and haven't clicked a day
 			ImGui::TextDisabled("Select a day on the calendar to view events.");
 		}
 
@@ -160,8 +157,8 @@ namespace cgui
 
 	void EditEvent() {
 		// 1. Static variables to hold the editing state
-		static char edit_title[100] = "";
-		static char edit_location[250] = "";
+		static char edit_title[256] = "";
+		static char edit_location[256] = "";
 		static char edit_details[1024] = "";
 		static int s_day, s_mon, s_year, s_hour, s_min;
 		static int e_day, e_mon, e_year, e_hour, e_min;
@@ -210,7 +207,7 @@ namespace cgui
 
 			// --- START TIME (Your exact layout code) ---
 			ImGui::AlignTextToFramePadding();
-			ImGui::Text("Start Time :"); ImGui::SameLine(label_align);
+			ImGui::Text("Start Time"); ImGui::SameLine(label_align);
 			ImGui::PushItemWidth(35.0f);
 			char edit_start_btn[32];
 			snprintf(edit_start_btn, sizeof(edit_start_btn), "%02d/%02d/%d##editstart", s_day, s_mon, s_year);
@@ -219,13 +216,14 @@ namespace cgui
 			}
 			MiniCalendar("Start Date", s_day, s_mon, s_year);
 			ImGui::SameLine(); ImGui::Text(", "); ImGui::SameLine();
-			ImGui::DragInt("##sh", &e_hour, 0.5f, 0, 23, "%02d"); ImGui::SameLine(); ImGui::Text(":"); ImGui::SameLine();
-			ImGui::DragInt("##smin", &e_min, 0.5f, 0, 59, "%02d");
+			ImGui::DragInt("##sh", &s_hour, 0.5f, 0, 23, "%02d"); 
+			ImGui::SameLine(); ImGui::Text(":"); ImGui::SameLine();
+			ImGui::DragInt("##smin", &s_min, 0.5f, 0, 59, "%02d");
 			ImGui::PopItemWidth();
 
 			// --- END TIME (Your exact layout code) ---
 			ImGui::AlignTextToFramePadding();
-			ImGui::Text("End Time   :"); ImGui::SameLine(label_align);
+			ImGui::Text("End Time"); ImGui::SameLine(label_align);
 			ImGui::PushItemWidth(35.0f);
 			char edit_end_btn[32];
 			snprintf(edit_end_btn, sizeof(edit_end_btn), "%02d/%02d/%d##editend", e_day, e_mon, e_year);
@@ -234,7 +232,8 @@ namespace cgui
 			}
 			MiniCalendar("End Date", e_day, e_mon, e_year);
 			ImGui::SameLine(); ImGui::Text(", "); ImGui::SameLine();
-			ImGui::DragInt("##eh", &e_hour, 0.5f, 0, 23, "%02d"); ImGui::SameLine(); ImGui::Text(":"); ImGui::SameLine();
+			ImGui::DragInt("##eh", &e_hour, 0.5f, 0, 23, "%02d"); 
+			ImGui::SameLine(); ImGui::Text(":"); ImGui::SameLine();
 			ImGui::DragInt("##emin", &e_min, 0.5f, 0, 59, "%02d");
 			ImGui::PopItemWidth();
 
@@ -273,13 +272,13 @@ namespace cgui
 			float targetX = ImGui::GetWindowWidth() - (buttonSize.x * 2.0f) - ImGui::GetStyle().ItemSpacing.x - 10.0f;
 			ImGui::SetCursorPosX(targetX);
 
-			if (ImGui::Button("Cancel", buttonSize)) {
+			if (ImGui::Button("Cancel##canceledit", buttonSize)) {
 				ImGui::CloseCurrentPopup();
 			}
 
 			ImGui::SameLine();
 
-			if (ImGui::Button("Save", buttonSize)) {
+			if (ImGui::Button("Save##saveedit", buttonSize)) {
 				// Convert the numbers from the DragInt boxes straight into time_t
 				time_t new_start = Utils::DMYtoTime(s_day, s_mon, s_year, s_hour, s_min);
 				time_t new_end = Utils::DMYtoTime(e_day, e_mon, e_year, e_hour, e_min);
@@ -427,7 +426,7 @@ namespace cgui
 		std::string header_text = std::string(month_names[selected_month - 1]) + " " + std::to_string(selected_year);
 		ImGui::SetWindowFontScale(2.0f);
 		ImGui::Text( "%s", header_text.c_str());
-		ImGui::SetWindowFontScale(1.0f); // คืนค่าขนาดตัวอักษรกลับเป็นปกติ
+		ImGui::SetWindowFontScale(1.0f);
 
 
 		// --- เริ่มส่วนที่แก้ไขให้ชิดขอบขวา ---
