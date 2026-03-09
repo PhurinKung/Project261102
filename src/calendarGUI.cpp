@@ -59,7 +59,7 @@ namespace cgui
 			ImGuiID dock_right_id, dock_left_bottom_id;
 
 			dock_right_id = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Right, 0.4f, NULL, &dock_main_id);
-			dock_left_bottom_id = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Down, 0.32f, NULL, &dock_main_id);
+			dock_left_bottom_id = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Down, 0.4f, NULL, &dock_main_id);
 
 
 			// --- ASSIGN WINDOWS ---
@@ -667,7 +667,9 @@ namespace cgui
 			if (year_start_x > 0.0f) ImGui::SetCursorPosX(year_start_x);
 
 			ImGui::SetWindowFontScale(1.0f);
+			ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[3]);
 			ImGui::Text("%s", year_str.c_str());
+			ImGui::PopFont();
 
 			if (ImGui::BeginTable("CalendarTable", 7)) {
 				const char* days[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
@@ -683,7 +685,7 @@ namespace cgui
 					ImGui::Text("%s", days[i]);
 				}
 				ImGui::SetWindowFontScale(1.25f);
-				ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[2]);
+				ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[3]);
 
 				//days of month
 				int DayOne = FirstDayOfMonth(this_year, this_month); //position of the first day of the month

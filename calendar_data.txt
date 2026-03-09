@@ -1,7 +1,9 @@
-EXAM2|1773594000|1773594000|Study|Don't for get to read|CMU|2
+EXAM2|1773594000|1773594000|Personal|Don't for get to read|CMU|2
+CTF|1774002900|1774006500|Competition|non's gonna beat everyone and capture every flag|in non dream|10
 EXAM1|1774234800|1774242000|Personal|Don't for get to read|CMU|1
 April fool's Day|1774980000|1775052000|Personal|don lok, สุดท้ายแล้วเธอไม่โกหก แต่ลืมบอกกันว่าไม่รัก|CMU|3
 wanDD|1775041200|1775052000|Drunk|r rai wa|porjai|7
-Oreo's Day|1775322000|1775408340|Business|ooooooooooooooooreoooooooooooooo|CMU|6
+Oreo's Day|1775322000|1775408340|Personal|ooooooooooooooooreoooooooooooooo|CMU|6
+mai ru kub|1775384760|1775388360|51236||mai rub ru|9
 Songkran|1776013200|1776272340|Personal|songkran|Nimman|5
-Discord Day|1778259600|1778364000|Day|pai gun|area101|8
+Discord Day|1778259600|1778364000|Personal|pai gun|area101|8
