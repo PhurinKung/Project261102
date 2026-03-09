@@ -1206,8 +1206,9 @@ namespace cgui
 					}
 					else {
 						myCalendar.addCategory(new_cat);
-						cats = myCalendar.getCategories(); //update to cats
 					}				
+
+					cats = myCalendar.getCategories(); //update to cats
 				}
 				ImGui::CloseCurrentPopup();
 			}
