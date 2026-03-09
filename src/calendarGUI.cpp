@@ -265,10 +265,51 @@ namespace cgui
 			if (!cats.empty()) {
 				if (ImGui::BeginCombo("##EditCat", cats[selected_cat_idx].c_str())) {
 					for (int i = 0; i < cats.size(); i++) {
+						ImGui::PushID(i);
+
 						bool is_selected = (selected_cat_idx == i);
+						
 						if (ImGui::Selectable(cats[i].c_str(), is_selected)) selected_cat_idx = i;
+
+						//if right click
+						if (ImGui::BeginPopupContextItem("DeleteCategoryMenu")) {
+							ImGui::TextDisabled("Options");
+							ImGui::Separator();
+
+							if (ImGui::Selectable("Edit")) {
+								EditCate = true;
+								is_cate_editing_mode = true;
+								category_to_edit = cats[i];
+							}
+
+							if (i != 0) { // if not personal can del
+								ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.3f, 0.3f, 1.0f));
+								if (ImGui::Selectable("Delete")) {
+
+									myCalendar.deleteCategory(cats[i]);
+									cats = myCalendar.getCategories();
+
+									if (selected_cat_idx == i) selected_cat_idx = 0;
+									else if (selected_cat_idx > i) selected_cat_idx--;
+								}
+								ImGui::PopStyleColor();
+							}
+
+							ImGui::EndPopup();
+						}
+						
 						if (is_selected) ImGui::SetItemDefaultFocus();
+
+						ImGui::PopID();
 					}
+
+					ImGui::Separator();
+
+					if (ImGui::Selectable("+ Add new")) {
+						is_cate_editing_mode = false;
+						createnewcategory = true;
+					}
+
 					ImGui::EndCombo();
 				}
 			}
@@ -1123,7 +1164,7 @@ namespace cgui
 			}
 			ImGui::SetWindowFontScale(1.25f);
 
-			ImGui::SetNextItemWidth(0.75 * ImGui::GetWindowWidth());
+			ImGui::SetNextItemWidth(0.86* ImGui::GetWindowWidth());
 			//press enter to search
 			bool isEnterPressed =  ImGui::InputTextWithHint("##SearchInput", "Search here...", searchText, IM_ARRAYSIZE(searchText), 
 				ImGuiInputTextFlags_EnterReturnsTrue
@@ -1328,7 +1369,9 @@ namespace cgui
 
 	void UpcomingEvent()
 	{
-		int n_events = 5;
+		
+		int n_events = 10;
+		
 		ImFont* Title = ImGui::GetIO().Fonts->Fonts[1];
 		ImGuiWindowClass window_class;
 		window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
@@ -1336,7 +1379,7 @@ namespace cgui
 
 		ImGui::Begin("Upcoming Event", NULL, ImGuiDockNodeFlags_NoTabBar);
 		ImGui::SetWindowFontScale(1.25f);
-		std::vector<Event> upcoming_events = myCalendar.getUpcomingEvents(5);
+		std::vector<Event> upcoming_events = myCalendar.getUpcomingEvents(n_events);
 		ImGui::PushFont(Title);
 		ImGui::Text("Upcoming Events");
 		ImGui::PopFont();
@@ -1347,11 +1390,14 @@ namespace cgui
 		float footer_height = 100.0f; // ขนาดที่ต้องการกันไว้ให้ปุ่ม (ปุ่มสูง 60 + ระยะห่าง)
 		ImGui::BeginChild("UpcomingScrollable", ImVec2(0, -footer_height));
 
+		ImGui::SetWindowFontScale(1.25f);
+
 		if (upcoming_events.empty()) {
 			ImGui::TextDisabled("No upcoming events.");
 		}
 		else {
 			for (int i = 0; i < upcoming_events.size(); i++) {
+				ImGui::SetWindowFontScale(1.25f);
 				const Event& ev = upcoming_events[i];
 				ImGui::PushID(ev.getID());
 
@@ -1366,10 +1412,10 @@ namespace cgui
 
 					if (days == 0) {
 						int hours = difftime(ev.getStartTime(), now) / 3600;
-						status_text = "in " + std::to_string(hours) + " hours";
+						status_text = "in " + std::to_string(hours) + " hours ";
 					}
 					else {
-						status_text = "in " + std::to_string(days) + " days";
+						status_text = "in " + std::to_string(days) + " days ";
 					}
 				}
 
@@ -1394,6 +1440,8 @@ namespace cgui
 
 				ImGui::SameLine(window_width - text_width);
 				ImGui::TextDisabled("%s", status_text.c_str());
+
+				ImGui::SetWindowFontScale(1.0f);
 
 				if (is_open) {
 					auto [s_day, s_month, s_year, s_hour, s_min] = Utils::timeToDMY(ev.getStartTime());
