@@ -216,7 +216,7 @@ namespace cgui
 			e_day = ed; e_mon = em; e_year = ey; e_hour = eh; e_min = emin;
 
 			// Match the old category to the dropdown
-			std::vector<std::string> cats = myCalendar.getCategories();
+			cats = myCalendar.getCategories();
 			selected_cat_idx = 0;
 			for (int i = 0; i < cats.size(); i++) {
 				if (cats[i] == current_editing_event.getCategory()) {
@@ -292,7 +292,7 @@ namespace cgui
 
 						//if right click
 						if (ImGui::BeginPopupContextItem("DeleteCategoryMenu")) {
-							ImGui::TextDisabled("Options");
+							ImGui::TextDisabled("%s", cats[i].c_str());
 							ImGui::Separator();
 
 							if (ImGui::Selectable("Edit")) {
@@ -834,7 +834,7 @@ namespace cgui
 
 					//if right click
 					if (ImGui::BeginPopupContextItem("DeleteCategoryMenu")) {
-						ImGui::TextDisabled("Options");
+						ImGui::TextDisabled("%s", cats[i].c_str());
 						ImGui::Separator();
 
 						if (ImGui::Selectable("Edit")) {
@@ -1252,10 +1252,44 @@ namespace cgui
 
 		ImGui::Begin("Upcoming Event", NULL, ImGuiDockNodeFlags_NoTabBar);
 		ImGui::SetWindowFontScale(1.25f);
-		std::vector<Event> upcoming_events = myCalendar.getUpcomingEvents(n_events);
+		
 		ImGui::PushFont(Title);
 		ImGui::Text("Upcoming Events");
 		ImGui::PopFont();
+
+		//todo : here
+		float window_width = ImGui::GetWindowContentRegionMax().x;
+		ImGui::SameLine(window_width - 250.0f);
+
+		ImGui::SetNextItemWidth(250.0f);
+
+		static int selecting_cate = 0; // 0 for all cate
+		std::string Dropdown_upcoming_focus = (selecting_cate == 0) ? "All categories" : cats[selecting_cate - 1];
+
+		if (ImGui::BeginCombo("##ChooseCat", Dropdown_upcoming_focus.c_str())) {
+			ImGui::PushID(0);
+			
+			bool is_selected = (selecting_cate == 0);
+			if (ImGui::Selectable("All categories", is_selected)) selecting_cate = 0;
+			if (is_selected) ImGui::SetItemDefaultFocus();
+			
+			ImGui::PopID();
+
+			for (int i = 1; i <= cats.size(); i++) {
+				ImGui::PushID(i);
+
+				bool is_selected = (selecting_cate == i);
+				if (ImGui::Selectable(cats[i - 1].c_str(), is_selected)) selecting_cate = i;
+				if (is_selected) ImGui::SetItemDefaultFocus();
+
+				ImGui::PopID();
+			}
+
+			ImGui::EndCombo();
+		}
+		
+		//upcoming event in selecting_cate
+		std::vector<Event> upcoming_events = myCalendar.getUpcomingEvents(n_events, selecting_cate);
 
 		// ==========================================================
 		// 1. เริ่มสร้างกล่องพื้นที่สำหรับเลื่อนเนื้อหา (เว้นด้านล่างไว้ 100 พิกเซล)
@@ -1266,7 +1300,7 @@ namespace cgui
 		ImGui::SetWindowFontScale(1.25f);
 
 		if (upcoming_events.empty()) {
-			ImGui::TextDisabled("No upcoming events.");
+			ImGui::TextDisabled("No upcoming events in %s.", Dropdown_upcoming_focus.c_str());
 		}
 		else {
 			for (int i = 0; i < upcoming_events.size(); i++) {

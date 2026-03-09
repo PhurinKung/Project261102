@@ -88,7 +88,7 @@ void CalendarManager::loadFromFile() {
 		categories.push_back(EventCategory("Emergency", 1.0f, 0.2f, 0.2f, 1.0f)); // สีแดง
 	}
 	
-	//load from data
+	//load events data
 	std::ifstream datasrc(data_filename);
 
 	if (datasrc.is_open()) {
@@ -150,7 +150,6 @@ void CalendarManager::loadFromFile() {
 					}
 				}
 				if (!hasCat) category = categories[0].getname(); // default category
-
 
 				Event LoadedEvent(title, StartTime, EndTime, category, detail, place, ID);
 				allEvents.push_back(LoadedEvent);
@@ -380,13 +379,13 @@ std::vector<Event> CalendarManager::searchEvents(std::string keyword) {
 	return KeywordFoundEvents;
 }
 
-std::vector<Event> CalendarManager::getUpcomingEvents(int N) {
+std::vector<Event> CalendarManager::getUpcomingEvents(int N, int IndexCate) {
 	std::vector<Event> upcoming;
 
 	time_t now = time(nullptr);
 
 	for (const auto& i : allEvents) {
-		if (i.getEndTime() >= now)
+		if (i.getEndTime() >= now && (IndexCate == 0 || i.getCategory() == categories[IndexCate-1].getname() ))
 			upcoming.push_back(i);
 
 		if (upcoming.size() == N) break;

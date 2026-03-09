@@ -122,7 +122,7 @@ public:
 	const std::vector<Event>& getAllEvents() const; // ใช้ const& ไม่ให้ copy ข้อมูล เปลืองแรม
 	std::vector<Event> getEventsByDate(int day, int month, int year);
 	std::vector<Event> searchEvents(std::string keyword);
-	std::vector<Event> getUpcomingEvents(int N); // next N events 
+	std::vector<Event> getUpcomingEvents(int N, int IndexCate); // next N events in I cate
 
 
 	std::vector<std::string> getCategories();
