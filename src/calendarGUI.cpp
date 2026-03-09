@@ -14,6 +14,8 @@ namespace cgui
 	static int ThisYear = -1;
 	static int ThisMonth = -1;
 
+	static unsigned long long focus_event_id = 0; // for upcomming with show event 
+
 	static bool editing = false;
 	static bool confirmDelete = false;
 	static bool createnewcategory = false;
@@ -97,7 +99,15 @@ namespace cgui
 			{
 				if (ImGui::BeginTabBar("EventTabs")) {
 					for (auto& ev : events_today) {
-						if (ImGui::BeginTabItem(ev.getTitle().c_str())) {
+
+						ImGuiTabItemFlags tab_flags = 0;
+
+						if (ev.getID() == focus_event_id) {
+							tab_flags = ImGuiTabItemFlags_SetSelected;
+							focus_event_id = 0;
+						}
+
+						if (ImGui::BeginTabItem(ev.getTitle().c_str(), nullptr, tab_flags)) { // nullptr -> NO X for close tap
 
 							// 1. กำหนดความสูงของพื้นที่ด้านล่างที่ต้องการกันไว้ให้ปุ่ม (ความสูงปุ่ม 35 + ระยะขอบนิดหน่อย = 55)
 							float footer_height_to_reserve = 55.0f;
@@ -1248,6 +1258,8 @@ namespace cgui
 					selected_day = s_day;
 					selected_month = s_month;
 					selected_year = s_year;
+
+					focus_event_id = ev.getID();
 
 					// อัปเดตเพื่อให้ปฏิทินเปลี่ยนเดือนตามด้วย
 					// ThisMonth = s_month;
