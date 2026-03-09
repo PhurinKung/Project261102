@@ -14,7 +14,7 @@ namespace cgui
 	static int ThisYear = -1;
 	static int ThisMonth = -1;
 
-	static unsigned long long focus_event_id = 0; // for upcomming with show event 
+	static unsigned long long focus_event_id = 0; // for upcoming with show event 
 
 	static bool editing = false;
 	static bool confirmDelete = false;
@@ -99,6 +99,7 @@ namespace cgui
 			{
 				if (ImGui::BeginTabBar("EventTabs")) {
 					for (auto& ev : events_today) {
+						ImGui::PushID(ev.getID());
 
 						ImGuiTabItemFlags tab_flags = 0;
 
@@ -163,7 +164,10 @@ namespace cgui
 							}
 
 							ImGui::EndTabItem();
+						
 						}
+
+						ImGui::PopID();
 					}
 					ImGui::EndTabBar();
 				}
