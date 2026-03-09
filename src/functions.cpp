@@ -47,61 +47,9 @@ CalendarManager::CalendarManager() { loadFromFile(); }
 CalendarManager::~CalendarManager() { saveToFile();  }
 
 void CalendarManager::loadFromFile() {
-	//load from data
-	std::ifstream datasrc(data_filename);
-	
 	std::string line;
 
-	if (datasrc.is_open()) {
-		allEvents.clear();
-
-		unsigned long long MAXID = 0;
-		while (getline(datasrc, line)) {
-			if (line.empty()) continue;
-
-			std::stringstream S(line);
-			std::string temporary;
-			std::vector<std::string> data;
-		
-			while (getline(S, temporary, '|')) {
-				data.push_back(temporary);
-			}
-
-			if (data.size() != 7) continue;
-
-			try {
-				std::string title = data[0];
-				time_t StartTime = stoll(data[1])
-					, EndTime = stoll(data[2]);
-				std::string category = data[3]
-					, detail = data[4]
-					, place = data[5];
-				unsigned long long ID = stoull(data[6]);
-
-				//change <br> in detail to \n
-				size_t pos = 0;
-				while ((pos = detail.find("<br>", pos)) != std::string::npos) {
-					detail.replace(pos, 4, "\n");
-					pos += 1; // เลื่อนไปหลัง \n
-				}
-
-
-				Event LoadedEvent(title, StartTime, EndTime, category, detail, place, ID);
-				allEvents.push_back(LoadedEvent);
-
-				MAXID = std::max(ID, MAXID);
-			}
-			catch(const std::exception& e){
-				continue;
-			}
-		}
-
-		datasrc.close();
-	
-		nextID = MAXID + 1;
-		this->sortEvents();
-	}
-
+	//load categories
 	std::ifstream catsrc(categories_data_filename);
 	if (catsrc.is_open()) {
 		while (getline(catsrc, line)) {
@@ -139,6 +87,70 @@ void CalendarManager::loadFromFile() {
 		categories.push_back(EventCategory("Study", 0.2f, 0.6f, 1.0f, 1.0f)); // สีฟ้า
 		categories.push_back(EventCategory("Emergency", 1.0f, 0.2f, 0.2f, 1.0f)); // สีแดง
 	}
+	
+	//load from data
+	std::ifstream datasrc(data_filename);
+
+	if (datasrc.is_open()) {
+		allEvents.clear();
+
+		unsigned long long MAXID = 0;
+		while (getline(datasrc, line)) {
+			if (line.empty()) continue;
+
+			std::stringstream S(line);
+			std::string temporary;
+			std::vector<std::string> data;
+		
+			while (getline(S, temporary, '|')) {
+				data.push_back(temporary);
+			}
+
+			if (data.size() != 7) continue;
+
+			try {
+				std::string title = data[0];
+				time_t StartTime = stoll(data[1])
+					, EndTime = stoll(data[2]);
+				std::string category = data[3]
+					, detail = data[4]
+					, place = data[5];
+				unsigned long long ID = stoull(data[6]);
+
+				//change <br> in detail to \n
+				size_t pos = 0;
+				while ((pos = detail.find("<br>", pos)) != std::string::npos) {
+					detail.replace(pos, 4, "\n");
+					pos += 1; // เลื่อนไปหลัง \n
+				}
+
+				bool hasCat = false; int N = categories.size();
+				for (int i = 0; i < N ; ++i) {
+					if (categories[i].getname() == category) {
+						hasCat = true;
+						break;
+					}
+				}
+				if (!hasCat) category = categories[0].getname(); // default category
+
+
+				Event LoadedEvent(title, StartTime, EndTime, category, detail, place, ID);
+				allEvents.push_back(LoadedEvent);
+
+				MAXID = std::max(ID, MAXID);
+			}
+			catch(const std::exception& e){
+				continue;
+			}
+		}
+
+		datasrc.close();
+	
+		nextID = MAXID + 1;
+		this->sortEvents();
+	}
+
+	
 
 	return ;
 }
@@ -259,14 +271,15 @@ std::pair<bool, std::string> CalendarManager::deleteCategory(std::string sadCate
 
 	if (it != categories.end()) {
 		categories.erase(it);
-		return { true, "success" };
-	}
-
-	// loop find all deleted category
-	for (auto& e : allEvents) {
-		if (e.getCategory() == sadCategory) {
-			e.changeCats("Personal");
+	
+		// loop find all deleted category
+		for (auto& e : allEvents) {
+			if (e.getCategory() == sadCategory) {
+				e.changeCats("Personal");
+			}
 		}
+
+		return { true, "success" };
 	}
 
 	return { false, "Can't find this category" };
