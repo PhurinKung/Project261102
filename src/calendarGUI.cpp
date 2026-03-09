@@ -22,6 +22,8 @@ namespace cgui
 	static bool is_cate_editing_mode = false;
 	static bool EditCate = false;
 
+	static bool confirmdelete = false;
+	static bool opoenminicalendar = false;
 	static CalendarManager myCalendar;
 	static Event current_editing_event, current_deleting_event;
 
@@ -38,6 +40,7 @@ namespace cgui
 	void ShowEvent();
 	void EditEvent();
 	void ConfirmDelete();
+	void MiniCalendar();
 
 	void ThewholecalendarGUI() 
 	{
@@ -77,6 +80,7 @@ namespace cgui
 		CreateNewCategory();
 		EditEvent();
 		ConfirmDelete();
+		MiniCalendar();
 	}
 	void ShowEvent() {
 		// 1. Create a window class to override the docking behavior
@@ -603,6 +607,104 @@ namespace cgui
 			ImGui::EndTable();
 		}
 		ImGui::End();
+	}
+
+	void MiniCalendar() {
+		std::time_t currentTime = std::time(nullptr);
+		auto [current_day, current_month, current_year, current_hour, current_minute] = Utils::timeToDMY(currentTime);
+		static int this_year = current_year;
+		static int this_month = current_month;
+		static int this_day = current_day;
+		const char* month_names[] = { "January", "February", "March", "April", "May", "June",
+										 "July", "August", "September", "October", "November", "December" };
+
+		if (opoenminicalendar) { 
+			ImGui::OpenPopup("Mini Calendar");
+			
+		}
+		if (ImGui::BeginPopupModal("Mini Calendar", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+			if (ImGui::ArrowButton("##left", ImGuiDir_Left)) {
+				this_month--;
+				if (this_month < 1) {
+					this_month = 12;
+					this_year--;
+				}
+			}
+			ImGui::SameLine();
+			ImGui::Text("%s", month_names[this_month - 1]);
+			ImGui::SameLine();
+			if (ImGui::ArrowButton("##right", ImGuiDir_Right)) {
+				this_month++;
+				if (this_month > 12) {
+					this_month = 1;
+					this_year++;
+				}
+			}
+			ImGui::Text("%d", this_year);
+
+			if (ImGui::BeginTable("CalendarTable", 7)) {
+				const char* days[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+				ImGui::TableNextRow();
+				for (int i = 0; i < 7; i++) {
+					ImGui::TableSetColumnIndex(i);
+
+					ImVec2 text_size = ImGui::CalcTextSize(days[i]);
+					float available_width = ImGui::GetContentRegionAvail().x;
+					float offset = (available_width - text_size.x) * 0.5f;
+					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset);
+					ImGui::Text("%s", days[i]);
+				}
+
+				//days of month
+				int DayOne = FirstDayOfMonth(this_year, this_month); //position of the first day of the month
+				int AllDay = HowManyDaysInThisMonth(this_year, this_month);
+
+				int nday = 1;
+				for (int i = 0; i < 6; i++) {
+					ImGui::TableNextRow();
+					for (int j = 0; j < 7; j++) {
+						ImGui::TableSetColumnIndex(j);
+						if (i == 0 && j < DayOne) ImGui::Text(""); //ช่องเปล่าก่อนวันแรก
+						else if (nday > AllDay) ImGui::Text(""); //ช่องเปล่าหลังวันท้ายของเดือน
+						else {
+							std::string day_str = std::to_string(nday);
+
+							ImGui::PushID(nday);
+							float cell_w = ImGui::GetContentRegionAvail().x;
+							float cell_h = 30.0f;
+							ImVec2 cursor_pos = ImGui::GetCursorScreenPos(); // top right coordinate of the box
+
+							bool is_selected = (this_day == nday && this_month == this_month && this_year == this_year);
+
+							if (ImGui::Selectable("##day", is_selected, 0, ImVec2(cell_w, cell_h))) {
+								if (is_selected) {
+									// if selected then deselect
+									this_day = -1;
+								}
+								else {
+									// if didnt select this then select this
+									this_day = nday;
+								}
+							}
+
+							//fill numbers
+							ImDrawList* draw_list = ImGui::GetWindowDrawList();
+							ImVec2 text_size = ImGui::CalcTextSize(day_str.c_str());
+							float offset_x = (cell_w - text_size.x) * 0.5f;
+							float offset_y = 8.0f;
+							ImVec2 text_pos = ImVec2(cursor_pos.x + offset_x, cursor_pos.y + offset_y);
+
+							draw_list->AddText(text_pos, ImGui::GetColorU32(ImGuiCol_Text), day_str.c_str());
+							ImGui::PopID(); // คืนค่า ID
+							nday++;
+						}
+					}
+				}
+				ImGui::EndTable();
+			}
+
+			ImGui::EndPopup();
+		}
 	}
 
 	//add new event
