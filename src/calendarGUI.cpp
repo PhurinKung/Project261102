@@ -459,8 +459,11 @@ namespace cgui
 		// 1. Save the starting Y position before drawing the text
 		float start_y = ImGui::GetCursorPosY();
 
-		ImGui::SetWindowFontScale(2.0f);
+		ImFont* Title = ImGui::GetIO().Fonts->Fonts[1];
+		ImGui::PushFont(Title);
+		ImGui::SetWindowFontScale(1.5f);
 		ImGui::Text("%s", header_text.c_str());
+		ImGui::PopFont();
 
 		// 2. Grab the exact height of the giant text we just drew
 		float text_height = ImGui::GetItemRectSize().y;
