@@ -3,7 +3,7 @@
 #include "imgui_internal.h"
 #include "functions.h"
 #include <ctime>
-//push for pulin
+
 namespace cgui
 {
 
@@ -58,7 +58,7 @@ namespace cgui
 			ImGuiID dock_right_id, dock_left_bottom_id;
 
 			dock_right_id = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Right, 0.4f, NULL, &dock_main_id);
-			dock_left_bottom_id = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Down, 0.35f, NULL, &dock_main_id);
+			dock_left_bottom_id = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Down, 0.32f, NULL, &dock_main_id);
 
 
 			// --- ASSIGN WINDOWS ---
@@ -230,9 +230,10 @@ namespace cgui
 			ImGui::AlignTextToFramePadding();
 			ImGui::Text("Start Time"); ImGui::SameLine(label_align);
 			ImGui::PushItemWidth(35.0f);
+			//ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.0f, 0.5f));
 			char edit_start_btn[32];
 			snprintf(edit_start_btn, sizeof(edit_start_btn), "%02d/%02d/%d##editstart", s_day, s_mon, s_year);
-			if (ImGui::Button(edit_start_btn, ImVec2(150, 0))) {
+			if (ImGui::Button(edit_start_btn, ImVec2(125, 0))) {
 				ImGui::OpenPopup("Start Date");
 			}
 			MiniCalendar("Start Date", s_day, s_mon, s_year);
@@ -248,7 +249,7 @@ namespace cgui
 			ImGui::PushItemWidth(35.0f);
 			char edit_end_btn[32];
 			snprintf(edit_end_btn, sizeof(edit_end_btn), "%02d/%02d/%d##editend", e_day, e_mon, e_year);
-			if (ImGui::Button(edit_end_btn, ImVec2(150, 0))) {
+			if (ImGui::Button(edit_end_btn, ImVec2(125, 0))) {
 				ImGui::OpenPopup("End Date");
 			}
 			MiniCalendar("End Date", e_day, e_mon, e_year);
@@ -257,6 +258,7 @@ namespace cgui
 			ImGui::SameLine(); ImGui::Text(":"); ImGui::SameLine();
 			ImGui::DragInt("##emin", &e_min, 0.5f, 0, 59, "%02d");
 			ImGui::PopItemWidth();
+			//ImGui::PopStyleVar();
 
 			// --- CATEGORY ---
 			ImGui::AlignTextToFramePadding();
@@ -324,7 +326,7 @@ namespace cgui
 
 			// --- DETAILS ---
 			ImGui::SeparatorText("Details");
-			ImGui::InputTextMultiline("##EditDet", edit_details, sizeof(edit_details), ImVec2(-1.0f, 140.0f), ImGuiInputTextFlags_WordWrap);
+			ImGui::InputTextMultiline("##EditDet", edit_details, sizeof(edit_details), ImVec2(-1.0f, 120.0f), ImGuiInputTextFlags_WordWrap);
 
 			ImGui::Dummy(ImVec2(0.0f, 10.0f));
 
@@ -504,7 +506,7 @@ namespace cgui
 		float total_w = (box_w * 2.0f) + spacing; // ความกว้างรวมของปุ่มทั้งสอง
 
 		// คำนวณหาตำแหน่งแกน X ที่จะทำให้ปุ่มชิดขวาพอดี (ความกว้างหน้าต่าง - ความกว้างปุ่ม - Padding)
-		float right_align_x = ImGui::GetWindowWidth() - total_w - ImGui::GetStyle().WindowPadding.x - 15.0f;
+		float right_align_x = ImGui::GetWindowWidth() - total_w;
 
 		// ใช้ SameLine แล้วใส่ค่า offset เข้าไป เพื่อดันปุ่มไปขวาสุด
 		ImGui::SameLine(right_align_x);
@@ -1500,10 +1502,11 @@ namespace cgui
 		float targetX = WindowWidth - (2 * buttonSize.x) - 45.0f; // *2 since we have 2 buttons
 
 		ImGui::SetCursorPos(ImVec2(targetX, targetY));
-
+		ImGui::SetWindowFontScale(1.0f);
 		if (ImGui::Button("search", buttonSize)) {
 			ImGui::OpenPopup("SearchEvent");
 		}
+		ImGui::SetWindowFontScale(1.25f);
 		ImGui::SameLine(0.0f, 15.0f);
 		ImGui::PushFont(Title);
 		if (ImGui::Button("+", buttonSize)) {
