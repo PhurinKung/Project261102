@@ -60,20 +60,31 @@ int main(int, char**)
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
 
+    ImFontConfig font_config;
+
+    font_config.GlyphOffset.y = -3.0f;
+
     //io.Fonts->AddFontDefault();
 
-    //add thai font here. NotoSansThai
+    //add thai font here. NotoSansThai [0]
     ImFont* thaiFont_normal = io.Fonts->AddFontFromFileTTF(
         "fonts/NotoSansThai-Medium.ttf",      // location
         18.0f,                          // font's size
-        NULL,                           
+        NULL,
         io.Fonts->GetGlyphRangesThai()
     );
-    //thai but Larger and Bold
+    //thai but Larger and Bold [1]
     ImFont* thaiFont_Title = io.Fonts->AddFontFromFileTTF(
         "fonts/NotoSansThai-Bold.ttf",      // location
         30.0f,                          // font's size
         NULL,
+        io.Fonts->GetGlyphRangesThai()
+    );
+    //to make it upper [2]
+    ImFont* thaiFont_center = io.Fonts->AddFontFromFileTTF(
+        "fonts/NotoSansThai-Bold.ttf",      // location
+        18.0f,                          // font's size
+        &font_config,
         io.Fonts->GetGlyphRangesThai()
     );
 

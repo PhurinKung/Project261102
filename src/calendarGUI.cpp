@@ -24,6 +24,7 @@ namespace cgui
 
 	static CalendarManager myCalendar;
 	static Event current_editing_event, current_deleting_event;
+	static Event currentTime;
 
 	static std::vector<std::string> cats = myCalendar.getCategories();
 
@@ -237,6 +238,7 @@ namespace cgui
 			}
 			MiniCalendar("Start Date", s_day, s_mon, s_year);
 			ImGui::SameLine(); ImGui::Text(", "); ImGui::SameLine();
+
 			ImGui::DragInt("##sh", &s_hour, 0.5f, 0, 23, "%02d"); 
 			ImGui::SameLine(); ImGui::Text(":"); ImGui::SameLine();
 			ImGui::DragInt("##smin", &s_min, 0.5f, 0, 59, "%02d");
@@ -253,6 +255,7 @@ namespace cgui
 			}
 			MiniCalendar("End Date", e_day, e_mon, e_year);
 			ImGui::SameLine(); ImGui::Text(", "); ImGui::SameLine();
+
 			ImGui::DragInt("##eh", &e_hour, 0.5f, 0, 23, "%02d"); 
 			ImGui::SameLine(); ImGui::Text(":"); ImGui::SameLine();
 			ImGui::DragInt("##emin", &e_min, 0.5f, 0, 59, "%02d");
@@ -403,66 +406,6 @@ namespace cgui
 			ImGui::EndPopup();
 		}
 		ImGui::PopStyleColor();
-	}
-
-	void thisistest(){
-
-		// 1. Create a window class to override the docking behavior
-		ImGuiWindowClass window_class;
-		window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
-		ImGui::SetNextWindowClass(&window_class);
-
-		// 2. Begin your window (keep NoTitleBar so it stays clean if you ever undock it)
-		ImGui::Begin("test", nullptr, ImGuiWindowFlags_NoTitleBar);
-
-		static char event_name[100] = "hehe";
-		ImGui::InputText("Event Name", event_name, sizeof(event_name));
-		// วางคำสั่งนี้ลอยๆ ได้เลย ข้อความจะถูกเซฟลง event_name ตลอดเวลาที่พิมพ์
-
-		if (ImGui::Button("Save Event")) {
-			// This is where you trigger your logic!
-
-			// Clear the text box after saving (optional)
-		}
-		static int selectedItem = 0;
-		const char* items[] = { "Apple", "Banana", "Orange", "Strawberry", "Kiwi" };
-		ImGui::Combo("###Select Fruit", &selectedItem, items, IM_ARRAYSIZE(items));
-		ImGui::Separator();
-		ImGui::Text("tada : %s", items[selectedItem]);
-
-		//details
-		ImGui::SetNextItemWidth(-1.0f);
-		ImGui::InputText("###Name", event_name, sizeof(event_name));
-		// "MyTabBar" is an internal ID, it doesn't show up on screen
-		if (ImGui::BeginTabBar("MyTabBar")) {
-
-			// First Tab
-			// Passing a boolean pointer (&is_open) automatically adds the little 'X' close button
-			bool is_open = true;
-			if (ImGui::BeginTabItem("Lettuce", &is_open)) {
-				ImGui::Text("Document \"Lettuce\"");
-				ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Lorem ipsum dolor sit amet...");
-
-				// Always call EndTabItem if BeginTabItem returns true
-				ImGui::EndTabItem();
-			}
-
-			// Second Tab (No 'X' button because we don't pass a boolean)
-			if (ImGui::BeginTabItem("Eggplant")) {
-				ImGui::Text("Document \"Eggplant\"");
-				ImGui::EndTabItem();
-			}
-
-			// Third Tab
-			if (ImGui::BeginTabItem("Carrot")) {
-				ImGui::Text("Document \"Carrot\"");
-				ImGui::EndTabItem();
-			}
-
-			// Always call EndTabBar if BeginTabBar returns true
-			ImGui::EndTabBar();
-		}
-		ImGui::End();
 	}
 
 	void DrawMainCalendar() 
@@ -780,7 +723,6 @@ namespace cgui
 		}
 	}
 
-
 	//add new event
 	void NewEvent() {
 
@@ -809,9 +751,12 @@ namespace cgui
 
 			ImGui::SetCursorPosX(targetX);
 
+			ImFont* center = ImGui::GetIO().Fonts->Fonts[2];
+			ImGui::PushFont(center);
 			if (ImGui::Button("X", closeButton)) {
 				ImGui::CloseCurrentPopup();
 			}
+			ImGui::PopFont();
 
 			ImGui::SetNextItemWidth(-20.0f);
 			static char event_name[100] = ""; //event's name
@@ -878,204 +823,75 @@ namespace cgui
 			}
 
 			/*-------------------------select date and time-----------------------------*/
-			//start
-			ImGui::Text("STARTS");
-			ImGui::SameLine();
 
-			time_t currentTime = time(nullptr);
-			auto [c_day, c_month, c_year, c_hour, c_minute] = Utils::timeToDMY(currentTime);
+			static int s_day, s_mon, s_year, s_hour, s_min;
+			static int e_day, e_mon, e_year, e_hour, e_min;
+		
+			std::time_t currentTime = std::time(nullptr);
+			auto [current_day, current_month, current_year, current_hour, current_minute] = Utils::timeToDMY(currentTime);
 
-			static int startdate = -1;
-			if (startdate == -1) {
-				if (selected_day == -1) { startdate = c_day - 1; }
-				else { startdate = selected_day - 1; }
+			if (ImGui::IsWindowAppearing()) {
+				
+				if (selected_day == -1) {
+					s_day = current_day;
+				} else { s_day = selected_day; }
+				
+				if (selected_month == -1) {
+					s_mon = current_month;
+				} else { s_mon = selected_month; }
+
+				if (selected_year == -1) {
+					s_year = current_year;
+				} else { s_year = selected_year; }
+
+				// pull current time
+				s_hour = current_hour;
+				s_min = current_minute;
+
+				// automatic end time ((plus 1 hour))
+				e_day = s_day;
+				e_mon = s_mon;
+				e_year = s_year;
+				e_hour = (s_hour + 1) % 24; // + 1 hr. /24 incase 23+1 = 24 -> 00.00
+				e_min = s_min;
 			}
 
-			const char* Date[] = {
-				"1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
-				"11", "12", "13", "14", "15", "16", "17", "18", "19", "20",
-				"21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31"
-			};
-			ImGui::SetNextItemWidth(60.0f);
-			ImGui::Combo("##Select startdate", &startdate, Date, IM_ARRAYSIZE(Date));
-			ImGui::SameLine();
+			//Start
 
-			static int startmonth = -1;
-			if (startmonth == -1) {
-				if (selected_month == -1) { startmonth = c_month - 1; }
-				else { startmonth = selected_month - 1; }
+			float label_align = 100.0f;
+
+			ImGui::AlignTextToFramePadding();
+			ImGui::Text("Start Time"); ImGui::SameLine(label_align);
+			ImGui::PushItemWidth(35.0f);
+			char edit_start_btn[32];
+			snprintf(edit_start_btn, sizeof(edit_start_btn), "%02d/%02d/%d##editstart", s_day, s_mon, s_year);
+			if (ImGui::Button(edit_start_btn, ImVec2(150, 0))) {
+				ImGui::OpenPopup("Start Date");
 			}
-			const char* Month[] = {
-				"JAN", "FEB", "MAR", "APR", "MAY", "JUN","JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
-			};
-			ImGui::SetNextItemWidth(75.0f);
-			ImGui::Combo("##Select Month", &startmonth, Month, IM_ARRAYSIZE(Month));
-			
+			MiniCalendar("Start Date", s_day, s_mon, s_year);
+			ImGui::SameLine(); ImGui::Text("Time  "); ImGui::SameLine();
 
-			ImGui::SameLine();
-
-			static int startyear = 0;
-			if (startyear == 0) {
-				startyear = selected_year;
-			}
-
-			char yearPreview[8];
-			snprintf(yearPreview, sizeof(yearPreview), "%d", startyear);
-
-			ImGui::SetNextItemWidth(75.0f);
-			if (ImGui::BeginCombo("##StartYear", yearPreview)) {
-				for (int y = selected_year; y < selected_year + 10; y++) {
-					char buf[8];
-					snprintf(buf, sizeof(buf), "%d", y);
-
-					bool isSelected = (startyear == y);
-					if (ImGui::Selectable(buf, isSelected)) {
-						startyear = y;
-					}
-					if (isSelected) ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
-			}
-			
-			ImGui::SameLine(0.0f, 30.0f);
-
-			//start time
-			ImGui::Text("Time :");
-			ImGui::SameLine();
-
-			static int startHour = 0;
-			char hourPreview[8];
-			snprintf(hourPreview, sizeof(hourPreview), "%02d", startHour);
-
-			ImGui::SetNextItemWidth(60.0f);
-			if (ImGui::BeginCombo("##StartHour", hourPreview)) {
-				for (int h = 0; h < 24; h++) {
-					char buf[8];
-					snprintf(buf, sizeof(buf), "%02d", h);
-
-					bool isSelected = (startHour == h);
-					if (ImGui::Selectable(buf, isSelected)) {
-						startHour = h;
-					}
-					if (isSelected) ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
-			}
-			ImGui::SameLine();
-			ImGui::Text(" : ");
-			ImGui::SameLine();
-
-			static int startMin = 0;
-			char minPreview[8];
-			snprintf(minPreview, sizeof(minPreview), "%02d", startMin);
-
-			ImGui::SetNextItemWidth(60.0f);
-			if (ImGui::BeginCombo("##StartMin", minPreview)) {
-				for (int m = 0; m <= 60; m++) {
-					char buf[8];
-					snprintf(buf, sizeof(buf), "%02d", m);
-
-					bool isSelected = (startMin == m);
-					if (ImGui::Selectable(buf, isSelected)) {
-						startMin = m;
-					}
-					if (isSelected) ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
-			}
+			ImGui::DragInt("##sh", &s_hour, 0.5f, 0, 23, "%02d");
+			ImGui::SameLine(); ImGui::Text(":"); ImGui::SameLine();
+			ImGui::DragInt("##smin", &s_min, 0.5f, 0, 59, "%02d");
+			ImGui::PopItemWidth();
 
 			//End
-			ImGui::Text("ENDS");
-			ImGui::SameLine(0.0f, 25.0f);
-
-			ImGui::SetNextItemWidth(60.0f);
-			static int enddate = -1;
-			if (enddate == -1) {
-				if (selected_day == -1) { enddate = c_day - 1; }
-				else { enddate = selected_day - 1; }
+			ImGui::AlignTextToFramePadding();
+			ImGui::Text("End Time"); ImGui::SameLine(label_align);
+			ImGui::PushItemWidth(35.0f);
+			char edit_end_btn[32];
+			snprintf(edit_end_btn, sizeof(edit_end_btn), "%02d/%02d/%d##editend", e_day, e_mon, e_year);
+			if (ImGui::Button(edit_end_btn, ImVec2(150, 0))) {
+				ImGui::OpenPopup("End Date");
 			}
-			ImGui::Combo("##Select enddate", &enddate, Date, IM_ARRAYSIZE(Date));
-			ImGui::SameLine();
+			MiniCalendar("End Date", e_day, e_mon, e_year);
+			ImGui::SameLine(); ImGui::Text("Time "); ImGui::SameLine();
 
-			ImGui::SetNextItemWidth(75.0f);
-			static int endMonth = -1;
-			if (endMonth == -1) {
-				if (selected_month == -1) { endMonth = c_month - 1; }
-				else { endMonth = selected_month - 1; }
-			}
-			ImGui::Combo("##Select endMonth", &endMonth, Month, IM_ARRAYSIZE(Month));
-			ImGui::SameLine();
-
-			ImGui::SetNextItemWidth(75.0f);
-			static int endyear = 0;
-			if (endyear == 0) {
-				endyear = selected_year;
-			}
-
-			char yearEndPreview[8];
-			snprintf(yearEndPreview, sizeof(yearEndPreview), "%d", endyear);
-
-			ImGui::SetNextItemWidth(75.0f);
-			if (ImGui::BeginCombo("##EndYear", yearEndPreview)) {
-				for (int y = selected_year; y < selected_year + 10; y++) {
-					char buf[8];
-					snprintf(buf, sizeof(buf), "%d", y);
-
-					bool isSelected = (endyear == y);
-					if (ImGui::Selectable(buf, isSelected)) {
-						endyear = y;
-					}
-					if (isSelected) ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
-			}
-
-			ImGui::SameLine(0.0f, 30.0f);
-
-			//end time
-			ImGui::Text("Time :");
-			ImGui::SameLine();
-
-			static int endHour = 0;
-			char hourEndPreview[8];
-			snprintf(hourEndPreview, sizeof(hourEndPreview), "%02d", endHour);
-
-			ImGui::SetNextItemWidth(60.0f);
-			if (ImGui::BeginCombo("##EndHour", hourEndPreview)) {
-				for (int h = 0; h < 24; h++) {
-					char buf[8];
-					snprintf(buf, sizeof(buf), "%02d", h);
-
-					bool isSelected = (endHour == h);
-					if (ImGui::Selectable(buf, isSelected)) {
-						endHour = h;
-					}
-					if (isSelected) ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
-			}
-			ImGui::SameLine();
-			ImGui::Text(" : ");
-			ImGui::SameLine();
-
-			static int endMin = 0;
-			char minEndPreview[8];
-			snprintf(minEndPreview, sizeof(minEndPreview), "%02d", endMin);
-
-			ImGui::SetNextItemWidth(60.0f);
-			if (ImGui::BeginCombo("##EndMin", minEndPreview)) {
-				for (int m = 0; m < 60; m++) {
-					char buf[8];
-					snprintf(buf, sizeof(buf), "%02d", m);
-
-					bool isSelected = (endMin == m);
-					if (ImGui::Selectable(buf, isSelected)) {
-						endMin = m;
-					}
-					if (isSelected) ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
-			}
+			ImGui::DragInt("##eh", &e_hour, 0.5f, 0, 23, "%02d");
+			ImGui::SameLine(); ImGui::Text(":"); ImGui::SameLine();
+			ImGui::DragInt("##emin", &e_min, 0.5f, 0, 59, "%02d");
+			ImGui::PopItemWidth();
 			
 			/*------------------------------------------------------------------*/
 
@@ -1096,8 +912,8 @@ namespace cgui
 			if (ImGui::Button("save", buttonSize)) {
 				// This is where you trigger your logic!
 
-				time_t st_timeinfo = Utils::DMYtoTime(atoi(Date[startdate]), startmonth+1, startyear, startHour, startMin);
-				time_t end_timeinfo = Utils::DMYtoTime(atoi(Date[enddate]), endMonth+1, endyear, endHour, endMin);
+				time_t st_timeinfo = Utils::DMYtoTime(s_day, s_mon, s_year, s_hour, s_min);
+				time_t end_timeinfo = Utils::DMYtoTime(e_day, e_mon, e_year, e_hour, e_min);
 
 				Event newEvent(event_name, st_timeinfo, end_timeinfo, cats[selectedCatIdx], detail, location);
 				myCalendar.addEvent(newEvent);
@@ -1109,11 +925,11 @@ namespace cgui
 
 				selectedCatIdx = 0;
 
-				startdate = 0; startmonth = 0; startyear = 0;
-				startHour = 0; startMin = 0;
+				s_day = 0; s_mon = 0; s_year = 0;
+				s_hour = 0; s_min = 0;
 
-				enddate = 0; endMonth = 0; endyear = 0;
-				endHour = 0; endMin = 0;
+				e_day = 0; e_mon = 0; e_year = 0;
+				e_hour = 0; e_min = 0;
 
 				// Clear the text box after saving (optional)
 				ImGui::CloseCurrentPopup();
@@ -1156,12 +972,15 @@ namespace cgui
 			static bool has_searched = false;
 
 			ImGui::SetWindowFontScale(1.0f);
+			ImFont* center = ImGui::GetIO().Fonts->Fonts[2];
+			ImGui::PushFont(center);
 			if (ImGui::Button("X", closeButton)) {
 				searchText[0] = '\0';
 				search_results.clear();
 				has_searched = false;
 				ImGui::CloseCurrentPopup();
 			}
+			ImGui::PopFont();
 			ImGui::SetWindowFontScale(1.25f);
 
 			ImGui::SetNextItemWidth(0.86* ImGui::GetWindowWidth());
