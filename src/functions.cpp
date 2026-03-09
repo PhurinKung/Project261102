@@ -124,6 +124,24 @@ void CalendarManager::loadFromFile() {
 					pos += 1; // เลื่อนไปหลัง \n
 				}
 
+				//change [OR] to |
+				pos = 0;
+				while ((pos = detail.find("[OR]", pos)) != std::string::npos) {
+					detail.replace(pos, 4, "|");
+					pos += 1;
+				}
+				pos = 0;
+				while ((pos = title.find("[OR]", pos)) != std::string::npos) {
+					title.replace(pos, 4, "|");
+					pos += 1;
+				}
+				pos = 0;
+				while ((pos = place.find("[OR]", pos)) != std::string::npos) {
+					place.replace(pos, 4, "|");
+					pos += 1;
+				}
+
+				//recheck if has this category in data (if dont set to default)
 				bool hasCat = false; int N = categories.size();
 				for (int i = 0; i < N ; ++i) {
 					if (categories[i].getname() == category) {
@@ -161,7 +179,6 @@ void CalendarManager::saveToFile() {
 	std::ofstream dest(data_filename);
 
 	for (const auto& i : allEvents) {
-		std::cout << "Saving..." << i.getTitle() << "\n";
 		if (i.getEndTime() < now) continue;
 
 		//change \n to <br>
@@ -172,10 +189,29 @@ void CalendarManager::saveToFile() {
 			pos += 4; // เลื่อนไปหลัง <br>
 		}
 
+		//change all | to [OR]
+		pos = 0;
+		while ((pos = detail.find('|', pos)) != std::string::npos) {
+			detail.replace(pos, 1, "[OR]");
+			pos += 4;
+		}
 
-		dest << i.getTitle() << "|" << i.getStartTime() << "|" << i.getEndTime() << "|" << i.getCategory() << "|"
-			<< detail << "|" << i.getPlaces() << "|" << i.getID() << "\n";
-		std::cout << "Saved " << i.getTitle() << "\n";
+		std::string title = i.getTitle();
+		pos = 0;
+		while ((pos = title.find('|', pos)) != std::string::npos) {
+			title.replace(pos, 1, "[OR]");
+			pos += 4;
+		}
+
+		std::string location = i.getPlaces();
+		pos = 0;
+		while ((pos = location.find('|', pos)) != std::string::npos) {
+			location.replace(pos, 1, "[OR]");
+			pos += 4;
+		}
+
+		dest << title << "|" << i.getStartTime() << "|" << i.getEndTime() << "|" << i.getCategory() << "|"
+			<< detail << "|" << location << "|" << i.getID() << "\n";
 
 	}
 
@@ -254,6 +290,8 @@ std::pair<bool, std::string> CalendarManager::addCategory(EventCategory newCateg
 			return { false, "already have this category !" };
 		}
 	}
+
+	if (name.find('|') != std::string::npos) return { false , "Category Can't include |" };
 
 	categories.push_back(newCategory);
 	return { true, "Success" };
