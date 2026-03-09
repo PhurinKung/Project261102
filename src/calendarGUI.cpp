@@ -105,7 +105,7 @@ namespace cgui
 							ImGui::BeginChild("ScrollingDetails", ImVec2(0, -footer_height_to_reserve));
 
 							// --- เริ่มวาดเนื้อหา (ย้ายโค้ดเดิมเข้ามาในนี้) ---
-							ImGui::SetWindowFontScale(1.75f);
+							ImGui::SetWindowFontScale(1.5f);
 							ImGui::Text("%s", ev.getTitle().c_str());
 							ImGui::Separator();
 							ImGui::SetWindowFontScale(1.25f);
@@ -260,7 +260,7 @@ namespace cgui
 
 			// --- CATEGORY ---
 			ImGui::AlignTextToFramePadding();
-			ImGui::Text("Category   :"); ImGui::SameLine(label_align);
+			ImGui::Text("Category   "); ImGui::SameLine(label_align);
 			ImGui::PushItemWidth(180.0f);
 			if (!cats.empty()) {
 				if (ImGui::BeginCombo("##EditCat", cats[selected_cat_idx].c_str())) {
@@ -276,8 +276,8 @@ namespace cgui
 
 			// --- LOCATION ---
 			ImGui::AlignTextToFramePadding();
-			ImGui::Text("Location   :"); ImGui::SameLine(label_align);
-			ImGui::PushItemWidth(250.0f);
+			ImGui::Text("Location   "); ImGui::SameLine(label_align);
+			ImGui::PushItemWidth(180.0f);
 			ImGui::InputText("##EditLoc", edit_location, sizeof(edit_location));
 			ImGui::PopItemWidth();
 
@@ -444,10 +444,17 @@ namespace cgui
 										 "July", "August", "September", "October", "November", "December" };
 
 		std::string header_text = std::string(month_names[selected_month - 1]) + " " + std::to_string(selected_year);
-		ImGui::SetWindowFontScale(2.0f);
-		ImGui::Text( "%s", header_text.c_str());
-		ImGui::SetWindowFontScale(1.0f);
+		
+		// 1. Save the starting Y position before drawing the text
+		float start_y = ImGui::GetCursorPosY();
 
+		ImGui::SetWindowFontScale(2.0f);
+		ImGui::Text("%s", header_text.c_str());
+
+		// 2. Grab the exact height of the giant text we just drew
+		float text_height = ImGui::GetItemRectSize().y;
+
+		ImGui::SetWindowFontScale(1.0f); // คืนค่าขนาดตัวอักษรกลับเป็นปกติ
 
 		// --- เริ่มส่วนที่แก้ไขให้ชิดขอบขวา ---
 		float box_w = ImGui::GetWindowWidth() * 0.05f; // ขนาดความกว้างของปุ่ม
@@ -460,6 +467,11 @@ namespace cgui
 
 		// ใช้ SameLine แล้วใส่ค่า offset เข้าไป เพื่อดันปุ่มไปขวาสุด
 		ImGui::SameLine(right_align_x);
+
+		// 3. THE FIX: Push the cursor down to the exact vertical center!
+		float button_height = ImGui::GetFrameHeight();
+		float y_offset = (text_height - button_height) * 0.5f;
+		ImGui::SetCursorPosY(start_y + y_offset);
 
 		//ทำให้กล่องโปร่งใส และตัวหนังสือสีขาว
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // พื้นหลังปกติโปร่งใส (No box)
@@ -476,6 +488,7 @@ namespace cgui
 			}
 		}
 		ImGui::SameLine(0.0f, spacing);
+		ImGui::SetCursorPosY(start_y + y_offset);
 		if (ImGui::ArrowButton("##right", ImGuiDir_Right)) { 
 			selected_month++;
 			if (selected_month > 12) {
@@ -490,7 +503,7 @@ namespace cgui
 		
 		ImGui::Dummy(ImVec2(0.0f, 10.0f)); // เพิ่มช่องว่าง
 		if (ImGui::BeginTable("CalendarTable", 7)) {
-
+			ImGui::SetWindowFontScale(1.25f);
 			//header of calendar
 			const char* days[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 			//ImGui::TableHeadersRow();
@@ -623,7 +636,7 @@ namespace cgui
 
 		bool is_open = true;
 		if (ImGui::BeginPopupModal(popup_id, &is_open, ImGuiWindowFlags_AlwaysAutoResize)) {
-
+			
 			if (ImGui::IsWindowAppearing()) //ในวินาทีแรกที่popupแสดงขึ้นมาจะเข้าเงื่อนไขนี้
 			{
 				this_day = return_day;
@@ -684,6 +697,8 @@ namespace cgui
 					ImGui::Text("%s", days[i]);
 				}
 				ImGui::SetWindowFontScale(1.25f);
+				ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[2]);
+
 				//days of month
 				int DayOne = FirstDayOfMonth(this_year, this_month); //position of the first day of the month
 				int AllDay = HowManyDaysInThisMonth(this_year, this_month);
@@ -699,7 +714,7 @@ namespace cgui
 							std::string day_str = std::to_string(nday);
 
 							ImGui::PushID(nday);
-							float cell_w = ImGui::GetContentRegionAvail().x;
+							float cell_w = 30.0f;
 							float cell_h = cell_w;
 							ImVec2 cursor_pos = ImGui::GetCursorScreenPos(); // top right coordinate of the box
 
@@ -713,7 +728,7 @@ namespace cgui
 							ImDrawList* draw_list = ImGui::GetWindowDrawList();
 							ImVec2 text_size = ImGui::CalcTextSize(day_str.c_str());
 							float offset_x = (cell_w - text_size.x) * 0.5f;
-							float offset_y = 8.0f;
+							float offset_y = (cell_h - text_size.y) * 0.5f;
 							ImVec2 text_pos = ImVec2(cursor_pos.x + offset_x, cursor_pos.y + offset_y);
 
 							draw_list->AddText(text_pos, ImGui::GetColorU32(ImGuiCol_Text), day_str.c_str());
@@ -735,6 +750,7 @@ namespace cgui
 				return_year = this_year;
 				ImGui::CloseCurrentPopup();
 			}
+			ImGui::PopFont();
 			ImGui::EndPopup();
 		}
 	}

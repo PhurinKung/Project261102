@@ -60,8 +60,6 @@ int main(int, char**)
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
 
-    //io.Fonts->AddFontDefault();
-
     //add thai font here. NotoSansThai
     ImFont* thaiFont_normal = io.Fonts->AddFontFromFileTTF(
         "fonts/NotoSansThai-Medium.ttf",      // location
@@ -77,6 +75,7 @@ int main(int, char**)
         io.Fonts->GetGlyphRangesThai()
     );
 
+    io.Fonts->AddFontDefault();
 
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
