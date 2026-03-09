@@ -413,7 +413,7 @@ namespace cgui
 			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 1.0f, 1.0f, 0.1f));
 
 			ImGui::SetCursorPos(ImVec2(targetX, targetY));
-			if (ImGui::Button("Cancle", buttonSize)) {
+			if (ImGui::Button("Cancel", buttonSize)) {
 				confirmDelete = false;
 				ImGui::CloseCurrentPopup();
 			}
