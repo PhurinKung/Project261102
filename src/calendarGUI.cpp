@@ -332,14 +332,22 @@ namespace cgui
 			ImGui::Dummy(ImVec2(0.0f, 10.0f));
 
 			// --- SAVE & CANCEL BUTTONS ---
-			ImVec2 buttonSize(80, 30);
+			ImVec2 buttonSize(80, 40);
 			float targetX = ImGui::GetWindowWidth() - (buttonSize.x * 2.0f) - ImGui::GetStyle().ItemSpacing.x - 10.0f;
 			ImGui::SetCursorPosX(targetX);
+
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
+			//opacity = 0
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+			//Hover
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 1.0f, 1.0f, 0.1f));
 
 			if (ImGui::Button("Cancel##canceledit", buttonSize)) {
 				ImGui::CloseCurrentPopup();
 			}
-
+			ImGui::PopStyleColor(2);
+			ImGui::PopStyleVar(1);
+			
 			ImGui::SameLine();
 
 			if (ImGui::Button("Save##saveedit", buttonSize)) {
@@ -362,7 +370,7 @@ namespace cgui
 
 	void ConfirmDelete() {
 		ImVec2 screenSize = ImGui::GetIO().DisplaySize;
-		ImVec2 targetSize(screenSize.x * 0.3f, screenSize.y * 0.2f);
+		ImVec2 targetSize(screenSize.x * 0.15f, screenSize.y * 0.175f);
 
 		ImGui::SetNextWindowSize(targetSize, ImGuiCond_Always);
 		ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
@@ -376,11 +384,11 @@ namespace cgui
 
 			ImGui::Separator();
 
-			ImGui::Text("Are you sure you want to delete this event?");
+			//ImGui::PushTextWrapPos(ImGui::GetWindowContentRegionMax().x - 5.0f);
+			ImGui::Text("Are you sure to delete this ?");
+			//ImGui::PopTextWrapPos();
 			
-			ImGui::Separator();
-			
-			ImVec2 buttonSize(80.0f, 25.0f);
+			ImVec2 buttonSize(70.0f, 30.0f);
 
 			float WindowWidth = ImGui::GetWindowWidth();
 			float WindowHeight = ImGui::GetWindowHeight();
@@ -388,12 +396,19 @@ namespace cgui
 			float targetX = WindowWidth - (2 * buttonSize.x) - 20.0f - 10.0f;
 			float targetY = WindowHeight - buttonSize.y - 20.0f;
 
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
+			//opacity = 0
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+			//Hover
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 1.0f, 1.0f, 0.1f));
+
 			ImGui::SetCursorPos(ImVec2(targetX, targetY));
 			if (ImGui::Button("Cancle", buttonSize)) {
 				confirmDelete = false;
 				ImGui::CloseCurrentPopup();
 			}
-			
+			ImGui::PopStyleColor(2);
+			ImGui::PopStyleVar(1);
 
 			ImGui::SameLine(0.0f, 10.0f);
 
@@ -727,13 +742,14 @@ namespace cgui
 	void NewEvent() {
 
 		ImVec2 screenSize = ImGui::GetIO().DisplaySize;
-		ImVec2 targetSize(screenSize.x * 0.45f, screenSize.y * 0.45f);
+		ImVec2 targetSize(screenSize.x * 0.45f, screenSize.y * 0.5f);
 		
 		ImGui::SetNextWindowSize(targetSize, ImGuiCond_Always);
 		ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
 
 		if (ImGui::BeginPopupModal("NewEvent", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar)) {
 
+			ImGui::SetWindowFontScale(1.25f);
 			ImFont* Title = ImGui::GetIO().Fonts->Fonts[1];
 			ImGui::PushFont(Title);
 			ImGui::Text("New Event");
@@ -751,12 +767,14 @@ namespace cgui
 
 			ImGui::SetCursorPosX(targetX);
 
+			ImGui::SetWindowFontScale(1.00f);
 			ImFont* center = ImGui::GetIO().Fonts->Fonts[2];
 			ImGui::PushFont(center);
 			if (ImGui::Button("X", closeButton)) {
 				ImGui::CloseCurrentPopup();
 			}
 			ImGui::PopFont();
+			ImGui::SetWindowFontScale(1.25f);
 
 			ImGui::SetNextItemWidth(-20.0f);
 			static char event_name[100] = ""; //event's name
@@ -852,13 +870,14 @@ namespace cgui
 				e_day = s_day;
 				e_mon = s_mon;
 				e_year = s_year;
-				e_hour = (s_hour + 1) % 24; // + 1 hr. /24 incase 23+1 = 24 -> 00.00
+				e_hour = (s_hour + 1)%24; // + 1 hr. /24 incase 23+1 = 24 -> 00.00
 				e_min = s_min;
 			}
 
 			//Start
 
-			float label_align = 100.0f;
+			float label_align = 120.0f;
+			float label_align2 = 330.0f;
 
 			ImGui::AlignTextToFramePadding();
 			ImGui::Text("Start Time"); ImGui::SameLine(label_align);
@@ -869,7 +888,7 @@ namespace cgui
 				ImGui::OpenPopup("Start Date");
 			}
 			MiniCalendar("Start Date", s_day, s_mon, s_year);
-			ImGui::SameLine(); ImGui::Text("Time  "); ImGui::SameLine();
+			ImGui::SameLine(); ImGui::Text("Time  "); ImGui::SameLine(label_align2);
 
 			ImGui::DragInt("##sh", &s_hour, 0.5f, 0, 23, "%02d");
 			ImGui::SameLine(); ImGui::Text(":"); ImGui::SameLine();
@@ -886,7 +905,7 @@ namespace cgui
 				ImGui::OpenPopup("End Date");
 			}
 			MiniCalendar("End Date", e_day, e_mon, e_year);
-			ImGui::SameLine(); ImGui::Text("Time "); ImGui::SameLine();
+			ImGui::SameLine(); ImGui::Text("Time "); ImGui::SameLine(label_align2);
 
 			ImGui::DragInt("##eh", &e_hour, 0.5f, 0, 23, "%02d");
 			ImGui::SameLine(); ImGui::Text(":"); ImGui::SameLine();
