@@ -64,8 +64,6 @@ int main(int, char**)
 
     font_config.GlyphOffset.y = -3.0f;
 
-    //io.Fonts->AddFontDefault();
-
     //add thai font here. NotoSansThai [0]
     ImFont* thaiFont_normal = io.Fonts->AddFontFromFileTTF(
         "fonts/NotoSansThai-Medium.ttf",      // location
@@ -88,6 +86,7 @@ int main(int, char**)
         io.Fonts->GetGlyphRangesThai()
     );
 
+    //[3]
     io.Fonts->AddFontDefault();
 
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
