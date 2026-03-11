@@ -41,7 +41,7 @@ int main(int, char**)
     // Create application window
     WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"ImGui Example", nullptr };
     ::RegisterClassExW(&wc);
-    HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"Dear ImGui DirectX11 Example", WS_OVERLAPPEDWINDOW, 100, 100, (int)(1280 * main_scale), (int)(800 * main_scale), nullptr, nullptr, wc.hInstance, nullptr);
+    HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"Calendar", WS_OVERLAPPEDWINDOW, 100, 100, (int)(1280 * main_scale), (int)(800 * main_scale), nullptr, nullptr, wc.hInstance, nullptr);
 
     // Initialize Direct3D
     if (!CreateDeviceD3D(hwnd))
@@ -59,25 +59,35 @@ int main(int, char**)
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.Fonts->AddFontDefault();
 
-    // io.Fonts->AddFontDefault();
+    ImFontConfig font_config;
 
-    //add thai font here. NotoSansThai
+    font_config.GlyphOffset.y = -3.0f;
+
+    //add thai font here. NotoSansThai [0]
     ImFont* thaiFont_normal = io.Fonts->AddFontFromFileTTF(
         "fonts/NotoSansThai-Medium.ttf",      // location
         18.0f,                          // font's size
-        NULL,                           
+        NULL,
         io.Fonts->GetGlyphRangesThai()
     );
-    //thai but Larger and Bold
+    //thai but Larger and Bold [1]
     ImFont* thaiFont_Title = io.Fonts->AddFontFromFileTTF(
         "fonts/NotoSansThai-Bold.ttf",      // location
         30.0f,                          // font's size
         NULL,
         io.Fonts->GetGlyphRangesThai()
     );
+    //to make it upper [2]
+    ImFont* thaiFont_center = io.Fonts->AddFontFromFileTTF(
+        "fonts/NotoSansThai-Bold.ttf",      // location
+        18.0f,                          // font's size
+        &font_config,
+        io.Fonts->GetGlyphRangesThai()
+    );
 
+    //[3]
+    io.Fonts->AddFontDefault();
 
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
@@ -115,7 +125,7 @@ int main(int, char**)
     //IM_ASSERT(font != nullptr);
 
     // Our state
-    bool show_demo_window = true;
+    bool show_demo_window = false;
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
@@ -160,7 +170,7 @@ int main(int, char**)
 
         //code goes here kub
         cgui::ThewholecalendarGUI();
-        ImGui::ShowDemoWindow(&show_demo_window);
+        //ImGui::ShowDemoWindow(&show_demo_window);
 
         /*
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
