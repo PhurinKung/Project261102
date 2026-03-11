@@ -33,7 +33,6 @@ namespace cgui
 	int FirstDayOfMonth(int, int);
 	int HowManyDaysInThisMonth(int, int);
 	void DrawMainCalendar();
-	void thisistest();
 	void UpcomingEvent();
 	void NewEvent();
 	void SearchEvent();
@@ -78,7 +77,7 @@ namespace cgui
 		UpcomingEvent();
 		NewEvent();
 		SearchEvent();
-		CreateNewCategory();
+		//CreateNewCategory();
 		EditEvent();
 		ConfirmDelete();
 	}
@@ -379,6 +378,8 @@ namespace cgui
 				myCalendar.editEvent(current_editing_event.getID(), updated_event);
 				ImGui::CloseCurrentPopup();
 			}
+
+			CreateNewCategory();
 
 			ImGui::EndPopup();
 		}
@@ -990,6 +991,8 @@ namespace cgui
 				// Clear the text box after saving (optional)
 				ImGui::CloseCurrentPopup();
 			}
+
+			CreateNewCategory();
 
 			ImGui::EndPopup();
 		
