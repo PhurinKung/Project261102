@@ -1258,19 +1258,22 @@ namespace cgui
 
 		ImGui::Begin("Upcoming Event", NULL, ImGuiDockNodeFlags_NoTabBar);
 		ImGui::SetWindowFontScale(1.25f);
-		
+
 		ImGui::PushFont(Title);
 		ImGui::Text("Upcoming Events");
 		ImGui::PopFont();
 
 		//todo : here
 		float window_width = ImGui::GetWindowContentRegionMax().x;
-		ImGui::SameLine(window_width - 250.0f);
+		ImGui::SameLine(window_width - 200.0f);
 
-		ImGui::SetNextItemWidth(250.0f);
+		ImGui::SetNextItemWidth(200.0f);
 
 		static int selecting_cate = 0; // 0 for all cate
 		std::string Dropdown_upcoming_focus = (selecting_cate == 0) ? "All categories" : cats[selecting_cate - 1];
+
+		float offset_y = 7.0f;
+		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + offset_y);
 
 		if (ImGui::BeginCombo("##ChooseCat", Dropdown_upcoming_focus.c_str())) {
 			ImGui::PushID(0);
